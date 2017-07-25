@@ -1,0 +1,13 @@
+[Unit]
+Description=LED indicator for hostapd
+BindsTo=hostapd.service
+
+[Service]
+Type=simple
+RemainAfterExit=True
+EnvironmentFile=/root/midirig/util/midirig.config
+ExecStart=/root/midirig/util/check_connected_clients
+#ExecStop=/root/midirig/util/ledcontroller 23 0
+
+[Install]
+WantedBy=hostapd.service

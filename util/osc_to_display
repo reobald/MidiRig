@@ -1,0 +1,25 @@
+#!/usr/bin/python
+
+import liblo, sys
+
+# send all messages to port 56418 on the local machine
+try:
+#    target = liblo.Address("osc.udp://127.0.0.1:56419")
+    target = liblo.Address(56419)
+except liblo.AddressError, err:
+    print str(err)
+    sys.exit()
+
+#check for message i arguments
+#if len(sys.argv)<2:
+#   sys.exit()
+#else:
+#   msg = sys.argv[1]
+
+
+# send message "/system/msg" with a string argument
+try:
+#   liblo.send(target, "/system/preview/text", "********************************")
+    liblo.send(target, "/system/preview/text", "****  EDIT  **** Transpose: -1")
+except:
+   print("fel")
