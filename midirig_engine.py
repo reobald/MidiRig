@@ -52,6 +52,78 @@ def handler(signum, frame):
 signal.signal(signal.SIGTERM, handler)
 signal.signal(signal.SIGINT, handler)
 
+#=====================================
+# Setup miditranslation infrastructure
+#=====================================
+upperSourceCh = 1
+lowerSourceCh = 2
+upperDestCh = 1
+lowerDestCh = 2
+def translateCh(midiEvent):
+    if (midiEvent.channel==upperSourceCh):
+	midiEvent.channel=upperDestCh
+    if (midiEvent.channel==lowerSourceCh):
+	midiEvent.channel=lowerDestCh
+    return midiEvent
+
+def channelMapping(midiEvent):
+    global upperDestCh
+    global lowerDestCh
+    if (midiEvent.channel==upperSourceCh):
+	if (22 <= midiEvent.data1 <= 29):
+	    upperDestCh = midiEvent.data1-21
+	    return None
+	elif (30 <= midiEvent.data1 <= 31):
+	    upperDestCh = midiEvent.data1-15
+	    return None
+    elif (midiEvent.channel==lowerSourceCh):
+	if (midiEvent.type==PROGRAM):
+	    ch = midiEvent.program % 8 
+	    if (ch==0):
+		ch=16
+	    if (ch==7):
+		ch=15
+	    lowerDestCh = ch 
+    	    return None
+    return midiEvent
+
+
+upperKeysPressed = {}
+lowerKeysPressed = {}
+def regNoteOn(midiEvent):
+    noteOn = midiEvent.type==NOTEON
+    print "noteOn: " + str(noteOn)
+    sustOn = midiEvent.type==CTRL && midiEvent.ctrl==64 && midiEvent.data2>=64
+    print "sustOn: " + str(sustOn)
+    if noteOn || sustOn:
+	sourceUpper = midiEvent.channel == upperSourceCh
+	sourceLower = midiEvent.channel == lowerSourceCh
+        print "source  U:" + str(sourceUpper) + ", L:" + str(sourceLower)
+	if sourceLower:
+	    lowerKeysPressed[midiEvent.data1]=midiEvent.channel
+	    print "lowerKeysPressed: " + lowerKeysPressed
+	if sourceUpper:
+	    upperKeysPressed[midiEvent.data1]=midiEvent.channel
+	    print "upperKeysPressed: " + upperKeysPressed
+    return midiEvent
+
+def handleNoteOff(midiEvent)
+    noteOff = midiEvent.type==NOTEOFF
+    sustOff = midiEvent.type==CTRL && midiEvent.ctrl==64 && midiEvent.data2<64
+    if noteOff || sustOff:
+	sourceUpper = midiEvent.channel == upperSourceCh
+	sourceLower = midiEvent.channel == lowerSourceCh
+	if sourceLower:
+	    ch = lowerKeysPressed[midiEvent.data1]
+	    if ch!= midiEvent.channel:
+	    	midiEvent.channel = ch
+	    del lowerKeysPressed[midiEvent.data1]
+	if sourceUpper:
+	    ch = upperKeysPressed[midiEvent.data1]
+	    if ch!= midiEvent.channel:
+	    	midiEvent.channel = ch
+	    del upperKeysPressed[midiEvent.data1]
+	
 
 
 #=================================
@@ -96,10 +168,12 @@ hook(
 cc82ch16 = CtrlFilter(82) % Channel(16)
 
 # PRE    : select everything but program changes, indicate midiactivity and log
-pre	= Process(midiactivity)>>Print("in")>>NRPNProgramChange()>>cc82ch16>>~Filter(PROGRAM)
+#pre	= Process(midiactivity)>>Print("in")>>NRPNProgramChange()>>cc82ch16>>~Filter(PROGRAM)
+pre	= Process(midiactivity)>>Print("in")>>Process(channelMapping)>>Process(translateCh)>>cc82ch16
 
 # CONTROL: select only program changes
-control	= Filter(PROGRAM)
+#control	= Filter(PROGRAM)
+control	= Print("control") >> Pass()
 
 #POST    : log and redirect to a port
 post	= Print("out")>>Port('INTEGRA-7_out')
