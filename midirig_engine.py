@@ -61,9 +61,13 @@ upperDestCh = 1
 lowerDestCh = 2
 def translateCh(midiEvent):
     if (midiEvent.channel==upperSourceCh):
+        print "upper - src: " + str(midiEvent.channel)+ ", dest: " + str(upperDestCh)
 	midiEvent.channel=upperDestCh
+        print "upper - changed: " + str(midiEvent.channel)
     if (midiEvent.channel==lowerSourceCh):
+        print "lower - src: " + str(midiEvent.channel)+ ", dest: " + str(lowerDestCh)
 	midiEvent.channel=lowerDestCh
+        print "lower - changed: " + str(midiEvent.channel)
     return midiEvent
 
 def channelMapping(midiEvent):
@@ -92,38 +96,56 @@ upperKeysPressed = {}
 lowerKeysPressed = {}
 def regNoteOn(midiEvent):
     noteOn = midiEvent.type==NOTEON
-    print "noteOn: " + str(noteOn)
-    sustOn = midiEvent.type==CTRL && midiEvent.ctrl==64 && midiEvent.data2>=64
-    print "sustOn: " + str(sustOn)
-    if noteOn || sustOn:
-	sourceUpper = midiEvent.channel == upperSourceCh
-	sourceLower = midiEvent.channel == lowerSourceCh
-        print "source  U:" + str(sourceUpper) + ", L:" + str(sourceLower)
+    sustOn = midiEvent.type==CTRL and  midiEvent.ctrl==64 and midiEvent.data2>=64
+    if noteOn or sustOn:
+	sourceUpper = midiEvent.channel == upperDestCh
+	sourceLower = midiEvent.channel == lowerDestCh
 	if sourceLower:
 	    lowerKeysPressed[midiEvent.data1]=midiEvent.channel
-	    print "lowerKeysPressed: " + lowerKeysPressed
 	if sourceUpper:
 	    upperKeysPressed[midiEvent.data1]=midiEvent.channel
-	    print "upperKeysPressed: " + upperKeysPressed
     return midiEvent
 
-def handleNoteOff(midiEvent)
+def copyMidiEventWithNewChannel(midiEvent,ch):
+    #type, port=0, channel=0, data1=0, data2=0
+    newEvent = MidiEvent()
+    newEvent.type = midiEvent.type
+    newEvent.port = midiEvent.port
+    newEvent.channel = ch
+    newEvent.data1 = midiEvent.data1
+    newEvent.data3 = midiEvent.data2
+    return newEvent
+
+def handleNoteOff(midiEvent):
+    eventList = [midiEvent]
     noteOff = midiEvent.type==NOTEOFF
-    sustOff = midiEvent.type==CTRL && midiEvent.ctrl==64 && midiEvent.data2<64
-    if noteOff || sustOff:
-	sourceUpper = midiEvent.channel == upperSourceCh
-	sourceLower = midiEvent.channel == lowerSourceCh
+    sustOff = midiEvent.type==CTRL and midiEvent.ctrl==64 and midiEvent.data2<64
+    if noteOff or sustOff:
+	sourceUpper = midiEvent.channel == upperDestCh
+	sourceLower = midiEvent.channel == lowerDestCh
+	key = midiEvent.data1
 	if sourceLower:
-	    ch = lowerKeysPressed[midiEvent.data1]
-	    if ch!= midiEvent.channel:
-	    	midiEvent.channel = ch
-	    del lowerKeysPressed[midiEvent.data1]
+	    ch = lowerKeysPressed.get(key,midiEvent.channel)
+	    midiEvent.channel = ch
+	    try:
+	        del lowerKeysPressed[key]
+		print "lower deleted"
+	    except:
+		print "No previous lower key press registered"
 	if sourceUpper:
-	    ch = upperKeysPressed[midiEvent.data1]
-	    if ch!= midiEvent.channel:
-	    	midiEvent.channel = ch
-	    del upperKeysPressed[midiEvent.data1]
-	
+	    ch = upperKeysPressed.get(key,midiEvent.channel)
+	    midiEvent.channel = ch
+	    try:
+	        del upperKeysPressed[key]
+		print "upper deleted"
+	    except:
+		print "No previous upper key press registered"
+    print "upper destination: " + str(upperDestCh)
+    print "lower destination: " + str(lowerDestCh)
+
+    return midiEvent
+
+
 
 
 #=================================
@@ -169,14 +191,15 @@ cc82ch16 = CtrlFilter(82) % Channel(16)
 
 # PRE    : select everything but program changes, indicate midiactivity and log
 #pre	= Process(midiactivity)>>Print("in")>>NRPNProgramChange()>>cc82ch16>>~Filter(PROGRAM)
-pre	= Process(midiactivity)>>Print("in")>>Process(channelMapping)>>Process(translateCh)>>cc82ch16
+pre	= Process(midiactivity)>>Process(channelMapping)>>Process(translateCh)>>cc82ch16>>Process(regNoteOn)>>Process(handleNoteOff)
 
 # CONTROL: select only program changes
 #control	= Filter(PROGRAM)
-control	= Print("control") >> Pass()
+control	= Discard()
 
 #POST    : log and redirect to a port
-post	= Print("out")>>Port('INTEGRA-7_out')
+#post	= Print("out")>>Port('INTEGRA-7_out')
+post	= Port('INTEGRA-7_out')
 
 organ 	= ChannelFilter(15,16)
 synth 	= ~ChannelFilter(15,16)
