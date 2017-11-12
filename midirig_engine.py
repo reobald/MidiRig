@@ -126,7 +126,6 @@ cc82ch16 = CtrlFilter(82) % Channel(16)
 
 # PRE    : select everything but program changes, indicate midiactivity and log
 #pre	= Process(midiactivity)>>Print("in")>>NRPNProgramChange()>>cc82ch16>>~Filter(PROGRAM)
-#pre	= Process(midiactivity)>>Print("in")>>Process(channelMapping)>>Process(translateCh)>>cc82ch16>>Process(regNoteOn)>>Process(handleNoteOff)
 pre     = Process(midiactivity)>>arturia>>Print("in")>>PgcChannelMapping>>ArturiaChannelMapping>>TranslateChannel>>cc82ch16>>RegNoteOn>>RegSusOn>>HandleNoteOff>>HandleSustainOff
 
 # CONTROL: select only program changes
@@ -134,11 +133,8 @@ pre     = Process(midiactivity)>>arturia>>Print("in")>>PgcChannelMapping>>Arturi
 control	= Discard()
 
 #POST    : log and redirect to a port
-#post	= Print("out")>>Port('INTEGRA-7_out')
-post	= Port('INTEGRA-7_out')
+post	= Print("out")>>Port('INTEGRA-7_out')
 
-organ 	= ChannelFilter(15,16)
-synth 	= ~ChannelFilter(15,16)
 
 
 #######################################################
