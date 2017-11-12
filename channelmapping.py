@@ -42,15 +42,17 @@ class ChannelMapping:
     return midiEvent
     
   def pgcChannelMapping(self, midiEvent):
-    if(midiEvent.channel==self.lowerSourceCh):
-      if (midiEvent.type==PROGRAM):
-        ch = midiEvent.program % 8
-        if (ch==0):
-            ch=16
-        if (ch==7):
-            ch=15
+    if (midiEvent.type==PROGRAM):
+      ch = midiEvent.program % 8
+      if (ch==0):
+        ch=16
+      if (ch==7):
+        ch=15
+      if(midiEvent.channel==self.lowerSourceCh):
         self.lowerDestCh = ch
-        return None
+      elif(midiEvent.channel==self.upperSourceCh):
+        self.upperDestCh = ch
+      return None
     return midiEvent
 
   def arturiaChannelMapping(self, midiEvent):
