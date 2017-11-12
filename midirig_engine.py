@@ -29,6 +29,7 @@ from mididings.extra import *
 from blinkingled import BlinkingLed
 from scene import *
 from scene.customunits import NRPNProgramChange
+from channelmapping import ChannelMapping
 #=================================
 # setup midiactivity indicator led
 #=================================
@@ -52,98 +53,17 @@ def handler(signum, frame):
 signal.signal(signal.SIGTERM, handler)
 signal.signal(signal.SIGINT, handler)
 
-#=====================================
-# Setup miditranslation infrastructure
-#=====================================
-upperSourceCh = 1
-lowerSourceCh = 2
-upperDestCh = 1
-lowerDestCh = 2
-def translateCh(midiEvent):
-    if (midiEvent.channel==upperSourceCh):
-        print "upper - src: " + str(midiEvent.channel)+ ", dest: " + str(upperDestCh)
-	midiEvent.channel=upperDestCh
-        print "upper - changed: " + str(midiEvent.channel)
-    if (midiEvent.channel==lowerSourceCh):
-        print "lower - src: " + str(midiEvent.channel)+ ", dest: " + str(lowerDestCh)
-	midiEvent.channel=lowerDestCh
-        print "lower - changed: " + str(midiEvent.channel)
-    return midiEvent
-
-def channelMapping(midiEvent):
-    global upperDestCh
-    global lowerDestCh
-    if (midiEvent.channel==upperSourceCh):
-	if (22 <= midiEvent.data1 <= 29):
-	    upperDestCh = midiEvent.data1-21
-	    return None
-	elif (30 <= midiEvent.data1 <= 31):
-	    upperDestCh = midiEvent.data1-15
-	    return None
-    elif (midiEvent.channel==lowerSourceCh):
-	if (midiEvent.type==PROGRAM):
-	    ch = midiEvent.program % 8 
-	    if (ch==0):
-		ch=16
-	    if (ch==7):
-		ch=15
-	    lowerDestCh = ch 
-    	    return None
-    return midiEvent
-
-
-upperKeysPressed = {}
-lowerKeysPressed = {}
-def regNoteOn(midiEvent):
-    noteOn = midiEvent.type==NOTEON
-    sustOn = midiEvent.type==CTRL and  midiEvent.ctrl==64 and midiEvent.data2>=64
-    if noteOn or sustOn:
-	sourceUpper = midiEvent.channel == upperDestCh
-	sourceLower = midiEvent.channel == lowerDestCh
-	if sourceLower:
-	    lowerKeysPressed[midiEvent.data1]=midiEvent.channel
-	if sourceUpper:
-	    upperKeysPressed[midiEvent.data1]=midiEvent.channel
-    return midiEvent
-
-def copyMidiEventWithNewChannel(midiEvent,ch):
-    #type, port=0, channel=0, data1=0, data2=0
-    newEvent = MidiEvent()
-    newEvent.type = midiEvent.type
-    newEvent.port = midiEvent.port
-    newEvent.channel = ch
-    newEvent.data1 = midiEvent.data1
-    newEvent.data3 = midiEvent.data2
-    return newEvent
-
-def handleNoteOff(midiEvent):
-    eventList = [midiEvent]
-    noteOff = midiEvent.type==NOTEOFF
-    sustOff = midiEvent.type==CTRL and midiEvent.ctrl==64 and midiEvent.data2<64
-    if noteOff or sustOff:
-	sourceUpper = midiEvent.channel == upperDestCh
-	sourceLower = midiEvent.channel == lowerDestCh
-	key = midiEvent.data1
-	if sourceLower:
-	    ch = lowerKeysPressed.get(key,midiEvent.channel)
-	    midiEvent.channel = ch
-	    try:
-	        del lowerKeysPressed[key]
-		print "lower deleted"
-	    except:
-		print "No previous lower key press registered"
-	if sourceUpper:
-	    ch = upperKeysPressed.get(key,midiEvent.channel)
-	    midiEvent.channel = ch
-	    try:
-	        del upperKeysPressed[key]
-		print "upper deleted"
-	    except:
-		print "No previous upper key press registered"
-    print "upper destination: " + str(upperDestCh)
-    print "lower destination: " + str(lowerDestCh)
-
-    return midiEvent
+#================================================
+# Setup midi channel translation infrastructure
+#================================================
+chMap = ChannelMapping(lowerSourceCh=2,upperSourceCh=1)
+TranslateChannel = Process(chMap.translateCh)
+PgcChannelMapping = Process(chMap.pgcChannelMapping) 
+ArturiaChannelMapping = Process(chMap.arturiaChannelMapping)
+RegNoteOn = Process(chMap.regNoteOn)
+HandleNoteOff = Process(chMap.handleNoteOff)
+RegSusOn = Process(chMap.regSusOn)
+HandleSustainOff = Process(chMap.handleSustainOff)
 
 
 
@@ -191,7 +111,8 @@ cc82ch16 = CtrlFilter(82) % Channel(16)
 
 # PRE    : select everything but program changes, indicate midiactivity and log
 #pre	= Process(midiactivity)>>Print("in")>>NRPNProgramChange()>>cc82ch16>>~Filter(PROGRAM)
-pre	= Process(midiactivity)>>Process(channelMapping)>>Process(translateCh)>>cc82ch16>>Process(regNoteOn)>>Process(handleNoteOff)
+#pre	= Process(midiactivity)>>Print("in")>>Process(channelMapping)>>Process(translateCh)>>cc82ch16>>Process(regNoteOn)>>Process(handleNoteOff)
+pre     = Process(midiactivity)>>Print("in")>>PgcChannelMapping>>ArturiaChannelMapping>>TranslateChannel>>cc82ch16>>RegNoteOn>>RegSusOn>>HandleNoteOff>>HandleSustainOff
 
 # CONTROL: select only program changes
 #control	= Filter(PROGRAM)
