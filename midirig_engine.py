@@ -30,6 +30,7 @@ from blinkingled import BlinkingLed
 from scene import *
 from scene.customunits import NRPNProgramChange
 from channelmapping import ChannelMapping
+from arturiamapping import ArturiaMapping
 #=================================
 # setup midiactivity indicator led
 #=================================
@@ -65,6 +66,11 @@ HandleNoteOff = Process(chMap.handleNoteOff)
 RegSusOn = Process(chMap.regSusOn)
 HandleSustainOff = Process(chMap.handleSustainOff)
 
+#================================================
+# Setup arturia mapping
+#================================================
+arturiaMap = ArturiaMapping()
+Arturia = ChannelFilter(1)%Process(arturiaMap.returnMapping)
 
 
 
@@ -107,26 +113,27 @@ hook(
 # setup mididings common patches
 #=================================
 # setup arturia mappings
-arturia = (ChannelFilter(1) & CtrlFilter(22,23,24,25,26,27,28,29,30,31,64)) % CtrlSplit({
-        64: CtrlRange(64, 127, 0),
-        22: CtrlValueSplit(22, Discard(), Program(1)),
-        23: CtrlValueSplit(23, Discard(), Program(2)),
-        24: CtrlValueSplit(24, Discard(), Program(3)),
-        25: CtrlValueSplit(25, Discard(), Program(4)),
-        26: CtrlValueSplit(26, Discard(), Program(5)),
-        27: CtrlValueSplit(27, Discard(), Program(6)),
-        28: CtrlValueSplit(28, Discard(), Program(7)),
-        29: CtrlValueSplit(29, Discard(), Program(8)),
-        30: CtrlValueSplit(30, Discard(), Program(7)),
-        31: CtrlValueSplit(31, Discard(), Program(8))
-})
+#arturia = (ChannelFilter(1) & CtrlFilter(22,23,24,25,26,27,28,29,30,31,64)) % CtrlSplit({
+#        64: CtrlRange(64, 127, 0),
+#        22: CtrlValueSplit(22, Discard(), Program(1)),
+#        23: CtrlValueSplit(23, Discard(), Program(2)),
+#        24: CtrlValueSplit(24, Discard(), Program(3)),
+#        25: CtrlValueSplit(25, Discard(), Program(4)),
+#        26: CtrlValueSplit(26, Discard(), Program(5)),
+#        27: CtrlValueSplit(27, Discard(), Program(6)),
+#        28: CtrlValueSplit(28, Discard(), Program(7)),
+#        29: CtrlValueSplit(29, Discard(), Program(8)),
+#        30: CtrlValueSplit(30, Discard(), Program(7)),
+#        31: CtrlValueSplit(31, Discard(), Program(8))
+#})
+
 
 # cc82 always on ch 16
 cc82ch16 = CtrlFilter(82) % Channel(16)
 
 # PRE    : select everything but program changes, indicate midiactivity and log
 #pre	= Process(midiactivity)>>Print("in")>>NRPNProgramChange()>>cc82ch16>>~Filter(PROGRAM)
-pre     = Process(midiactivity)>>arturia>>Print("in")>>PgcChannelMapping>>ArturiaChannelMapping>>TranslateChannel>>cc82ch16>>RegNoteOn>>RegSusOn>>HandleNoteOff>>HandleSustainOff
+pre     = Process(midiactivity)>>Arturia>>Print("in")>>PgcChannelMapping>>ArturiaChannelMapping>>TranslateChannel>>cc82ch16>>RegNoteOn>>RegSusOn>>HandleNoteOff>>HandleSustainOff
 
 # CONTROL: select only program changes
 #control	= Filter(PROGRAM)
