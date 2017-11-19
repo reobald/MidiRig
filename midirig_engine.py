@@ -25,12 +25,12 @@ import signal
 from mididings import *
 from mididings.extra.gm import *
 from mididings.extra.osc import OSCInterface
+from mididings.extra.osc import SendOSC
 from mididings.extra import *
 from blinkingled import BlinkingLed
 from scene import *
-from scene.customunits import NRPNProgramChange
 from channelmapping import ChannelMapping
-from arturiamapping import ArturiaMapping
+from arturiamapping import ArturiaMapping, PresetSelector
 #=================================
 # setup midiactivity indicator led
 #=================================
@@ -53,24 +53,6 @@ def handler(signum, frame):
 #attachhandler to system signals
 signal.signal(signal.SIGTERM, handler)
 signal.signal(signal.SIGINT, handler)
-
-#================================================
-# Setup midi channel translation infrastructure
-#================================================
-chMap = ChannelMapping(lowerSourceCh=2,upperSourceCh=1)
-TranslateChannel = Process(chMap.translateCh)
-PgcChannelMapping = Process(chMap.pgcChannelMapping) 
-ArturiaChannelMapping = Process(chMap.arturiaChannelMapping)
-RegNoteOn = Process(chMap.regNoteOn)
-HandleNoteOff = Process(chMap.handleNoteOff)
-RegSusOn = Process(chMap.regSusOn)
-HandleSustainOff = Process(chMap.handleSustainOff)
-
-#================================================
-# Setup arturia mapping
-#================================================
-arturiaMap = ArturiaMapping()
-Arturia = ChannelFilter(1)%Process(arturiaMap.returnMapping)
 
 
 
@@ -108,6 +90,27 @@ hook(
         OSCInterface(port,notify_ports)
 )
 
+#================================================
+# Setup midi channel translation infrastructure
+#================================================
+chMap = ChannelMapping(lowerSourceCh=2,upperSourceCh=1)
+TranslateChannel = Process(chMap.translateCh)
+PgcChannelMapping = Process(chMap.pgcChannelMapping) 
+ArturiaChannelMapping = Process(chMap.arturiaChannelMapping)
+RegNoteOn = Process(chMap.regNoteOn)
+HandleNoteOff = Process(chMap.handleNoteOff)
+RegSusOn = Process(chMap.regSusOn)
+HandleSustainOff = Process(chMap.handleSustainOff)
+
+#================================================
+# Setup arturia controller number mappings
+#================================================
+oscPort = sys.argv[2]
+oscPrevAddr = "/system/preview/scene"
+arturiaMap = ArturiaMapping()
+Arturia = ChannelFilter(1) % (Process(arturiaMap.returnMapping)>> \
+          CtrlFilter( arturiaMap.presetCtrlNr) % (SceneSwitch(number=EVENT_DATA2)>>Discard()) >> \
+          CtrlFilter( arturiaMap.browseCtrlNr) % (SendOSC(oscPort,oscPrevAddr,lambda evt: evt.data2)>>Discard()))
 
 #=================================
 # setup mididings common patches

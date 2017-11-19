@@ -21,47 +21,45 @@
 
 from mididings.event import MidiEvent,ProgramEvent,CtrlEvent
 from mididings import *
+from mididings.extra.osc import SendOSC
 import sys
 
 class ArturiaMapping:
   def __init__(self):
+    self.ps = PresetSelector()
     self.toggleMemory = {}
-    self.MMC_rewind  = str((0xF0,0x7F,0x7F,0x06,0x05,0xF7))
-    self.MMC_forward = str((0xF0,0x7F,0x7F,0x06,0x04,0xF7))
-    self.MMC_stop    = str((0xF0,0x7F,0x7F,0x06,0x01,0xF7))
-    self.MMC_play    = str((0xF0,0x7F,0x7F,0x06,0x02,0xF7))
-    self.MMC_recStr  = str((0xF0,0x7F,0x7F,0x06,0x06,0xF7))
 
-    self.transposeUp    = lambda: sys.stdout.write("transposeUp")
-    self.transposeDown  = lambda: sys.stdout.write("transposeDown")
-    self.transposeReset = lambda: sys.stdout.write("transposeReset")
+    self.transposeUp    = lambda evt: sys.stdout.write("transposeUp")
+    self.transposeDown  = lambda evt: sys.stdout.write("transposeDown")
+    self.transposeReset = lambda evt: sys.stdout.write("transposeReset")
 
-    self.sysexMap = {
-#      self.MMC_rewind:  lambda evt: self.transposeDown(),
-#      self.MMC_forward: lambda evt: self.transposeUp(),
-#      self.MMC_stop: 	lambda evt: self.transposeReset(),
-#      self.MMC_recStr:  lambda evt: Panic()
-    }
+    self.browseCtrlNr = 114
+    self.presetCtrlNr = 115
+
 
     self.ctrlMap = {
-      12: lambda evt: CtrlEvent(evt.port,16,82,evt.value),
-      22: lambda evt: self.convertCtlToPgm(evt,1),
-      23: lambda evt: self.convertCtlToPgm(evt,2),
-      24: lambda evt: self.convertCtlToPgm(evt,3),
-      25: lambda evt: self.convertCtlToPgm(evt,4),
-      26: lambda evt: self.convertCtlToPgm(evt,5),
-      27: lambda evt: self.convertCtlToPgm(evt,6),
-      28: lambda evt: self.convertCtlToPgm(evt,7),
-      29: lambda evt: self.convertCtlToPgm(evt,8),
-      30: lambda evt: self.convertCtlToPgm(evt,15),
-      31: lambda evt: self.convertCtlToPgm(evt,16),
-      53: lambda evt: self.transposeDown(),
-      52: lambda evt: self.transposeUp(),
-      51: lambda evt: self.transposeReset(),
-#      54: lambda evt: CtrlEvent(evt.port,16,82,evt.value),
-#      50: lambda evt: CtrlEvent(evt.port,16,82,evt.value),
-      55: lambda evt: self.toggleCtrl(CtrlEvent(evt.port,16,82,evt.value)),
-      64: lambda evt: CtrlEvent(evt.port,evt.channel,64,127-evt.value),
+      12:  lambda evt: CtrlEvent(evt.port,16,82,evt.value),
+      22:  lambda evt: self.convertCtlToPgm(evt,1),
+      23:  lambda evt: self.convertCtlToPgm(evt,2),
+      24:  lambda evt: self.convertCtlToPgm(evt,3),
+      25:  lambda evt: self.convertCtlToPgm(evt,4),
+      26:  lambda evt: self.convertCtlToPgm(evt,5),
+      27:  lambda evt: self.convertCtlToPgm(evt,6),
+      28:  lambda evt: self.convertCtlToPgm(evt,7),
+      29:  lambda evt: self.convertCtlToPgm(evt,8),
+      30:  lambda evt: self.convertCtlToPgm(evt,15),
+      31:  lambda evt: self.convertCtlToPgm(evt,16),
+      53:  lambda evt: self.transposeDown(),
+      52:  lambda evt: self.transposeUp(),
+      51:  lambda evt: self.transposeReset(),
+#      54:  lambda evt: CtrlEvent(evt.port,16,82,evt.value),
+#      50:  lambda evt: CtrlEvent(evt.port,16,82,evt.value),
+      55:  lambda evt: self.toggleCtrl(CtrlEvent(evt.port,16,82,evt.value)),
+      64:  lambda evt: CtrlEvent(evt.port,evt.channel,64,127-evt.value),
+      114: lambda evt: self.ps.browsePresets(evt),
+      115: lambda evt: self.ps.selectPreset(evt),
+      118: lambda evt: self.ps.stepPreset(evt,0),
+      119: lambda evt: self.ps.stepPreset(evt,127),
     }
 
 
@@ -69,9 +67,6 @@ class ArturiaMapping:
     try:
 	if midiEvent.type==CTRL:
 	   return  self.ctrlMap[midiEvent.ctrl](midiEvent)
-	elif midiEvent.type == SYSEX:
-	   sysexKey = str(midiEvent.sysex)
-	   return self.sysexMap[sysexKey]
     except KeyError:
 	pass
     return midiEvent
@@ -102,4 +97,27 @@ class ArturiaMapping:
 	   return midiEvent
 	return None
 
+
+class PresetSelector:
+  def __init__(self):
+    self.preset = 1
+
+  def browsePresets(self, midiEvent):
+    if midiEvent.data2<64 and self.preset>1:
+	self.preset-=1
+    elif self.preset<256:
+	self.preset+=1
+    midiEvent.data2=self.preset
+    return midiEvent
+
+  def stepPreset(self, midiEvent,value):
+    if midiEvent.data2>0:
+	midiEvent.data1=114
+        midiEvent.data2=value
+	return self.browsePresets(midiEvent)
+
+  def selectPreset(self, midiEvent):
+    if midiEvent.data2 > 0:
+	midiEvent.data2=self.preset-1
+        return midiEvent
 

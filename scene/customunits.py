@@ -18,7 +18,6 @@
 from mididings import *
 from mididings.extra.osc import SendOSC
 from mididings.extra.gm import * 
-from arturia import ArturiaNRPN
 
 ####################
 # Global variables
@@ -69,7 +68,6 @@ group = {'STUDIO SET' :[85,0],  #Studio set
 }
 INDEX_GROUPNR = 0
 INDEX_LSBOFFSET = 1
-arturia = ArturiaNRPN()
 transposeOffset = 0
 
 
@@ -88,30 +86,6 @@ def convertToPgcInfo(groupname, nr):
   nr = nr+1
   return {'msb':msb,'lsb':lsb,'nr':nr}
 
-
-def nrpnPgc(midievent):
-  global arturia
-  if arturia==None:
-    print "arturia is None"
-    arturia = ArturiaNRPN()
-  
-  if arturia.msgIsValid(midievent):
-    print "valid event"
-    if midievent.data1 == 99:
-      arturia.reset()
-      arturia.setMsb( midievent.data2 )
-    elif midievent.data1 == 98:
-      arturia.setLsb(midievent.data2)
-    elif midievent.data1 == 38:
-      arturia.setData(midievent.data2)
-      return midievent
-    elif midievent.data1==6:
-      midievent.data2 = arturia.commit();
-      return midievent
-  return None
-
-def data2(midievent):
-	return midievent.data2+1
 
 def transposeUp(midievent):
 	global transposeOffset
@@ -160,14 +134,6 @@ def ConvertExpression(ch,cc):
 def ConnectSusPedals(chA,chB):
 	return (ChannelFilter(chA) & CtrlFilter(CTRL_SUSTAIN)) % [Pass(),Channel(chB)]
 
-#Handles a nrpn transaction implemented to browse sounds, choose one and give user feedback
-def NRPNProgramChange():
-	return [Pass(), 
-		Process(nrpnPgc) >> \
-		CtrlFilter( 6) % SceneSwitch(number=EVENT_DATA2) >> \
-		CtrlFilter(38) % SendOSC(56419,"/system/preview/scene",data2) >> \
-		Discard()
-	       ]
 
 def SetGlobalTranspose():
 	return CtrlFilter(79) % ((	(CtrlValueFilter( 64) % Process(transposeReset)) >> \
