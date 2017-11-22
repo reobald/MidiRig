@@ -66,6 +66,7 @@ config(
     client_name='MidiRig',
     #name ports and connect them to alsa client
     in_ports = [
+      ('midirig_in', 'Virtual Raw MIDI [0-9]-.*:0'),
       ('KeyLab_in',    'KeyLab.*:0'),
       ('INTEGRA-7_in',    'INTEGRA-7.*:0'),
     ],
@@ -143,7 +144,7 @@ pre     = Process(midiactivity)>>Arturia>>Print("in")>>PgcChannelMapping>>Arturi
 control	= Discard()
 
 #POST    : log and redirect to a port
-post	= Print("out")>>Port('INTEGRA-7_out')
+post	= Print("out")>>[SysExFilter(manufacturer=(0x00,0x20,0x6B))%Port('KeyLab_out'),Port('INTEGRA-7_out')]
 
 
 
