@@ -17,8 +17,9 @@
 # You should have received a copy of the GNU General Public License along with MidiRig.
 # If not, see <http://www.gnu.org licenses/>. 
 
-import liblo, sys, smbus, time, signal, threading
+import liblo, sys, smbus, time, signal, threading, subprocess
 from previewer import Previewer
+from arturia_sysex import ArturiaSysex
 
 #mididings global variables
 data_offset = 0
@@ -44,6 +45,17 @@ ERR = 1
 ROW1 = 0
 ROW2 = 1
 ALL = 2
+
+#Arturia display
+sysex = ArturiaSysex()
+#rawMidiPort = subprocess.check_output(['amidi','-l']).splitlines()[1][4:10]
+#sendSysexCmd = ['amidi','-p',rawMidiPort,'-S','']
+sendSysexCmd = ['amidi','-S','']
+
+def updateArturiaDisplay(lcd_text):
+	sendSysexCmd[2] = sysex.generateNameMsgAsStr(lcd_text)
+	print sendSysexCmd
+	subprocess.call(sendSysexCmd)
 
 
 def i2cWriteString(cmd,str):
@@ -124,8 +136,10 @@ def updateDisplayMsg(inputText):
       		return
 
 
+
 lock = threading.Lock()
 def updateDisplay(sevseg_info, lcd_text):
+    print "updateDisplay: {}".format(lcd_text)
     try:
 	lock.acquire()
 	try:
@@ -133,6 +147,7 @@ def updateDisplay(sevseg_info, lcd_text):
    	except TypeError:
    	   update7SegText(sevseg_info)
 	updateDisplayMsg(lcd_text)
+	updateArturiaDisplay(lcd_text)
     finally:
 	lock.release()
 

@@ -26,7 +26,10 @@ import sys
 
 class ArturiaMapping:
   def __init__(self):
-    self.ps = PresetSelector()
+    self.preset = 1
+
+    self.resetDisplayEvent = None
+   
     self.toggleMemory = {}
 
     self.transposeUp    = lambda evt: sys.stdout.write("transposeUp")
@@ -56,11 +59,12 @@ class ArturiaMapping:
 #      50:  lambda evt: CtrlEvent(evt.port,16,82,evt.value),
       55:  lambda evt: self.toggleCtrl(CtrlEvent(evt.port,16,82,evt.value)),
       64:  lambda evt: CtrlEvent(evt.port,evt.channel,64,127-evt.value),
-      114: lambda evt: self.ps.browsePresets(evt),
-      115: lambda evt: self.ps.selectPreset(evt),
-      118: lambda evt: self.ps.stepPreset(evt,0),
-      119: lambda evt: self.ps.stepPreset(evt,127),
+      114: lambda evt: self.browsePresets(evt),
+      115: lambda evt: self.selectPreset(evt),
+      118: lambda evt: self.stepPreset(evt,0),
+      119: lambda evt: self.stepPreset(evt,127),
     }
+
 
 
   def returnMapping(self,midiEvent):
@@ -68,7 +72,9 @@ class ArturiaMapping:
 	if midiEvent.type==CTRL:
 	   return  self.ctrlMap[midiEvent.ctrl](midiEvent)
     except KeyError:
-	pass
+    	pass
+    if self.isArturiaSysexNameMsg(midiEvent):
+	self.resetDisplayEvent = midiEvent
     return midiEvent
 
 
@@ -77,7 +83,8 @@ class ArturiaMapping:
 	   port = midiEvent.port
 	   channel = midiEvent.channel
 	   return ProgramEvent(port, channel, program)
-	return None
+	else:
+	   return self.resetDisplayEvent
 
   def registerTransposeUp(self, f):
 	self.transposeUp = f	
@@ -97,10 +104,16 @@ class ArturiaMapping:
 	   return midiEvent
 	return None
 
-
-class PresetSelector:
-  def __init__(self):
-    self.preset = 1
+  def isArturiaSysexNameMsg(self,midiEvent):
+	if midiEvent.type == SYSEX:
+	   header = [0xf0, 0x00, 0x20, 0x6B, 0x7F, 0x42, 0x04, 0x00, 0x60]
+	   for i,b in enumerate(header):
+		if b != midiEvent.sysex[i]:
+			print "no match: {}!={}".format(b,midiEvent.sysex[i])
+			return False
+	   return True
+	else:
+	   return False
 
   def browsePresets(self, midiEvent):
     if midiEvent.data2<64 and self.preset>1:
@@ -115,9 +128,16 @@ class PresetSelector:
 	midiEvent.data1=114
         midiEvent.data2=value
 	return self.browsePresets(midiEvent)
+    else:
+	return self.resetDisplayEvent
 
   def selectPreset(self, midiEvent):
     if midiEvent.data2 > 0:
 	midiEvent.data2=self.preset-1
         return midiEvent
+    else:
+	return self.resetDisplayEvent
 
+  def printSysex(self,midiEvent):
+	for c in midiEvent.sysex:
+	  print c,

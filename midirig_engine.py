@@ -30,7 +30,7 @@ from mididings.extra import *
 from blinkingled import BlinkingLed
 from scene import *
 from channelmapping import ChannelMapping
-from arturiamapping import ArturiaMapping, PresetSelector
+from arturiamapping import ArturiaMapping
 #=================================
 # setup midiactivity indicator led
 #=================================
@@ -66,12 +66,14 @@ config(
     client_name='MidiRig',
     #name ports and connect them to alsa client
     in_ports = [
-      ('midirig_in', 'Virtual Raw MIDI [0-9]-.*:0'),
+      ('RAW MIDI_in', 'Virtual Raw MIDI 0-0.*:0'),
       ('KeyLab_in',    'KeyLab.*:0'),
       ('INTEGRA-7_in',    'INTEGRA-7.*:0'),
+      'midirig_in'
     ],
     out_ports=[
-      ('KeyLab_out',    'KeyLab.*:0'),
+      #('KeyLab_out',    'KeyLab.*:0'),
+      ('KeyLab_out',    'KeyLab 61.*:0'),
       ('INTEGRA-7_out',    'INTEGRA-7.*:0'),
     ],
     # ...or just change the number of ports available    #in_ports=2,
@@ -109,9 +111,13 @@ HandleSustainOff = Process(chMap.handleSustainOff)
 oscPort = sys.argv[2]
 oscPrevAddr = "/system/preview/scene"
 arturiaMap = ArturiaMapping()
-Arturia = ChannelFilter(1) % (Process(arturiaMap.returnMapping)>> \
-          CtrlFilter( arturiaMap.presetCtrlNr) % (SceneSwitch(number=EVENT_DATA2)>>Discard()) >> \
-          CtrlFilter( arturiaMap.browseCtrlNr) % (SendOSC(oscPort,oscPrevAddr,lambda evt: evt.data2)>>Discard()))
+Arturia = (SysExFilter(manufacturer=(0x00,0x20,0x6B)) | ChannelFilter(1)) % \
+	  (Process(arturiaMap.returnMapping)>> \
+          CtrlFilter( arturiaMap.presetCtrlNr) % \
+		(SceneSwitch(number=EVENT_DATA2)>>Discard()) >> \
+          CtrlFilter( arturiaMap.browseCtrlNr) % \
+		(SendOSC(oscPort,oscPrevAddr,lambda evt: evt.data2)>>Discard())\
+	  )
 
 #=================================
 # setup mididings common patches
@@ -137,7 +143,7 @@ cc82ch16 = CtrlFilter(82) % Channel(16)
 
 # PRE    : select everything but program changes, indicate midiactivity and log
 #pre	= Process(midiactivity)>>Print("in")>>NRPNProgramChange()>>cc82ch16>>~Filter(PROGRAM)
-pre     = Process(midiactivity)>>Arturia>>Print("in")>>PgcChannelMapping>>ArturiaChannelMapping>>TranslateChannel>>cc82ch16>>RegNoteOn>>RegSusOn>>HandleNoteOff>>HandleSustainOff
+pre     = Print("pre")>>Process(midiactivity)>>Arturia>>Print("in")>>PgcChannelMapping>>ArturiaChannelMapping>>TranslateChannel>>cc82ch16>>RegNoteOn>>RegSusOn>>HandleNoteOff>>HandleSustainOff
 
 # CONTROL: select only program changes
 #control	= Filter(PROGRAM)
