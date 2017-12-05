@@ -19,7 +19,7 @@
 
 import liblo, sys, smbus, time, signal, threading, subprocess
 from previewer import Previewer
-from arturia_sysex import ArturiaSysex
+from arturia_sysex import ArturiaSysexTransmitter
 
 #mididings global variables
 data_offset = 0
@@ -47,16 +47,11 @@ ROW2 = 1
 ALL = 2
 
 #Arturia display
-sysex = ArturiaSysex()
-#rawMidiPort = subprocess.check_output(['amidi','-l']).splitlines()[1][4:10]
-#sendSysexCmd = ['amidi','-p',rawMidiPort,'-S','']
-sendSysexCmd = ['amidi','-S','']
+sysex_trx = ArturiaSysexTransmitter()
+sysex_trx.start()
 
 def updateArturiaDisplay(lcd_text):
-	sendSysexCmd[2] = sysex.generateNameMsgAsStr(lcd_text)
-	print sendSysexCmd
-	subprocess.call(sendSysexCmd)
-
+	sysex_trx.sendText(lcd_text)
 
 def i2cWriteString(cmd,str):
 	datalist = map( ord, str)
@@ -164,6 +159,7 @@ previewer.start()
 #create handler for graceful exit
 def handler(signum, frame):
     previewer.stop_event.set()
+    sysex_trx.stop()
     print 'Exiting midirig_display'
     sys.exit()
 
