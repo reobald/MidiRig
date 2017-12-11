@@ -19,7 +19,7 @@
 # If not, see <http://www.gnu.org licenses/>. 
 
 
-from mididings.event import MidiEvent,ProgramEvent,CtrlEvent
+from mididings.event import MidiEvent,ProgramEvent,CtrlEvent,SysExEvent
 from mididings import *
 from mididings.extra.osc import SendOSC
 import sys
@@ -77,6 +77,16 @@ class ArturiaMapping:
 	self.resetDisplayEvent = midiEvent
     return midiEvent
 
+  def toggleButtonLights(self, event):
+	button = event.ctrl-22
+	event_list = []
+	for i in range(10):
+	  btn_adr = 0x12 + i
+	  btn_value = 127 * (i == button)
+	  cmd = [0xF0,0x00,0x20,0x6B,0x7F,0x42,0x02,0x00,0x10,btn_adr,btn_value,0xF7]
+          event_list.append(SysExEvent(event.port,cmd))
+	return event_list
+	  
 
   def convertCtlToPgm(self,midiEvent,program):
 	if midiEvent.value>0:
@@ -84,7 +94,9 @@ class ArturiaMapping:
 	   channel = midiEvent.channel
 	   return ProgramEvent(port, channel, program)
 	else:
-	   return self.resetDisplayEvent
+	   sysex_events = self.toggleButtonLights(midiEvent)
+	   sysex_events.append(self.resetDisplayEvent)
+	   return sysex_events
 
   def registerTransposeUp(self, f):
 	self.transposeUp = f	
