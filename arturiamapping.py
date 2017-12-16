@@ -26,15 +26,12 @@ import sys
 
 class ArturiaMapping:
   def __init__(self):
+    self.transpose = 0
     self.preset = 1
 
     self.resetDisplayEvent = None
    
     self.toggleMemory = {}
-
-    self.transposeUp    = lambda evt: sys.stdout.write("transposeUp")
-    self.transposeDown  = lambda evt: sys.stdout.write("transposeDown")
-    self.transposeReset = lambda evt: sys.stdout.write("transposeReset")
 
     self.browseCtrlNr = 114
     self.presetCtrlNr = 115
@@ -52,9 +49,9 @@ class ArturiaMapping:
       29:  lambda evt: self.convertCtlToPgm(evt,8),
       30:  lambda evt: self.convertCtlToPgm(evt,15),
       31:  lambda evt: self.convertCtlToPgm(evt,16),
-      53:  lambda evt: self.transposeDown(),
-      52:  lambda evt: self.transposeUp(),
-      51:  lambda evt: self.transposeReset(),
+      53:  lambda evt: self.transposeSysex(evt,-1),
+      52:  lambda evt: self.transposeSysex(evt,1),
+      51:  lambda evt: self.transposeSysex(evt,0),
 #      54:  lambda evt: CtrlEvent(evt.port,16,82,evt.value),
 #      50:  lambda evt: CtrlEvent(evt.port,16,82,evt.value),
       55:  lambda evt: self.toggleCtrl(CtrlEvent(evt.port,16,82,evt.value)),
@@ -97,15 +94,6 @@ class ArturiaMapping:
 	   sysex_events = self.toggleButtonLights(midiEvent)
 	   sysex_events.append(self.resetDisplayEvent)
 	   return sysex_events
-
-  def registerTransposeUp(self, f):
-	self.transposeUp = f	
-	
-  def registerTransposeDown(self, f):
-	self.transposeDown = f	
-
-  def registerTransposeReset(self, f):
-	self.transposeReset = f	
 
 
   def toggleCtrl(self, midiEvent):
@@ -153,3 +141,21 @@ class ArturiaMapping:
   def printSysex(self,midiEvent):
 	for c in midiEvent.sysex:
 	  print c,
+
+  def transposeSysex(self, midievent,transposeValue):
+	if midievent.value>0:
+	   tmp = 0 if transposeValue == 0 else self.transpose + transposeValue
+	   if 0<= tmp <= 127:
+	      self.transpose = tmp
+	      msgList = self.generateAllNotesOff(midievent.port)
+	      syx = [0xf0, 0x7f, 0x04, 0x04, 0x00, self.transpose, 0xf7]
+	      msgList.append(SysExEvent(midievent.port,syx))
+	      return msgList
+	return self.resetDisplayEvent
+
+  def generateAllNotesOff(self, port):
+	allNotesOff = []
+	for channel in range(1,17):
+	   allNotesOff.append(CtrlEvent(port, channel, 123, 0))
+	return allNotesOff
+

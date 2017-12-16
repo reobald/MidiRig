@@ -1,5 +1,5 @@
 def generateList():
-	list = ["default", "midirigconstants", "roland_sysex","customunits","arturia"]
+	list = ["default", "midirigconstants", "roland_sysex","customunits"]
 	for i in range(1,257):
 		s = "scene_"
 		if i>99: 

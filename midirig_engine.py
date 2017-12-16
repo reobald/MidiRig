@@ -119,12 +119,30 @@ Arturia = (SysExFilter(manufacturer=(0x00,0x20,0x6B)) | ChannelFilter(1)) % \
 		(SendOSC(oscPort,oscPrevAddr,lambda evt: evt.data2)>>Discard())\
 	  )
 
+#================================================
+# Setup transpose infrastructure
+#================================================
+transpose = 0
+def transposeInfo(midievent):
+	global transpose 
+	transpose = midievent.sysex[5]
+	return None
+
+def globalTranspose(midievent):
+	midievent.note += transpose
+	if 0 <= midievent.note <= 127: 
+	   return midievent
+	else: 
+	   return None
+
+SetTranspose = SysExFilter([0xf0, 0x7f, 0x04, 0x04, 0x00]) % Process(transposeInfo)
+GlobalTranspose = Filter(NOTE) % Process(globalTranspose)
 
 # cc82 always on ch 16
 cc82ch16 = CtrlFilter(82) % Channel(16)
 
 # PRE: signal midiactivity, perform arturia controller mappings and channelmappings
-pre     = Print("pre")>>Process(midiactivity)>>Arturia>>Print("in")>>PgcChannelMapping>>ArturiaChannelMapping>>TranslateChannel>>cc82ch16>>RegNoteOn>>RegSusOn>>HandleNoteOff>>HandleSustainOff
+pre     = Print("pre")>>Process(midiactivity)>>Arturia>>Print("in")>>PgcChannelMapping>>ArturiaChannelMapping>>TranslateChannel>>cc82ch16>>SetTranspose>>GlobalTranspose>>RegNoteOn>>RegSusOn>>HandleNoteOff>>HandleSustainOff
 
 # CONTROL: select only program changes
 #control	= Filter(PROGRAM)
