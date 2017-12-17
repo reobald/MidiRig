@@ -27,6 +27,7 @@ from mididings.extra.gm import *
 from mididings.extra.osc import OSCInterface
 from mididings.extra.osc import SendOSC
 from mididings.extra import *
+from mididings.event import NoteOffEvent,CtrlEvent
 from blinkingled import BlinkingLed
 from scene import *
 from channelmapping import ChannelMapping
@@ -138,18 +139,37 @@ def globalTranspose(midievent):
 SetTranspose = SysExFilter([0xf0, 0x7f, 0x04, 0x04, 0x00]) % Process(transposeInfo)
 GlobalTranspose = Filter(NOTE) % Process(globalTranspose)
 
+#================================================
+# All notes off - because ctrl 123 is not implemented by nord
+#================================================
+def allNotesOff(midievent):
+   if midievent.type==CTRL and midievent.ctrl==123:
+      allnotesoff = [midievent]
+      for ch in range(15,17):
+         for note in range(29,102):
+	    allnotesoff.append(NoteOffEvent(midievent.port,ch,note,0))
+         allnotesoff.append(CtrlEvent(midievent.port,ch,64,0))
+      return allnotesoff
+   return midievent	
+
 # cc82 always on ch 16
 cc82ch16 = CtrlFilter(82) % Channel(16)
 
 # PRE: signal midiactivity, perform arturia controller mappings and channelmappings
-pre     = Print("pre")>>Process(midiactivity)>>Arturia>>Print("in")>>PgcChannelMapping>>ArturiaChannelMapping>>TranslateChannel>>cc82ch16>>SetTranspose>>GlobalTranspose>>RegNoteOn>>RegSusOn>>HandleNoteOff>>HandleSustainOff
+pre     = Print("pre") \
+		>> Process(midiactivity) >> Arturia >> Print("in")  \
+		>> PgcChannelMapping >> ArturiaChannelMapping >> TranslateChannel  \
+		>> RegNoteOn >> RegSusOn >> HandleNoteOff >> HandleSustainOff  \
+		>> cc82ch16 >> SetTranspose >> GlobalTranspose >> Process(allNotesOff)
 
 # CONTROL: select only program changes
 #control	= Filter(PROGRAM)
 control	= Discard()
 
 #POST    : log and redirect to a port
-post	= Print("out")>>[SysExFilter(manufacturer=(0x00,0x20,0x6B))%Port('KeyLab_out'),Port('INTEGRA-7_out')]
+post	= Print("out")  \
+		>> [SysExFilter(manufacturer=(0x00,0x20,0x6B))  \
+			%Port('KeyLab_out'),Port('INTEGRA-7_out')]
 
 
 

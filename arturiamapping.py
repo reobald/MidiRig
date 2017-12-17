@@ -52,7 +52,7 @@ class ArturiaMapping:
       53:  lambda evt: self.transposeSysex(evt,-1),
       52:  lambda evt: self.transposeSysex(evt,1),
       51:  lambda evt: self.transposeSysex(evt,0),
-#      54:  lambda evt: CtrlEvent(evt.port,16,82,evt.value),
+      54:  lambda evt: self.allNotesOff(evt),
 #      50:  lambda evt: CtrlEvent(evt.port,16,82,evt.value),
       55:  lambda evt: self.toggleCtrl(CtrlEvent(evt.port,16,82,evt.value)),
       64:  lambda evt: CtrlEvent(evt.port,evt.channel,64,127-evt.value),
@@ -146,16 +146,18 @@ class ArturiaMapping:
 	if midievent.value>0:
 	   tmp = 0 if transposeValue == 0 else self.transpose + transposeValue
 	   if 0<= tmp <= 127:
+	      evtList = self.allNotesOff(midievent)
 	      self.transpose = tmp
-	      msgList = self.generateAllNotesOff(midievent.port)
 	      syx = [0xf0, 0x7f, 0x04, 0x04, 0x00, self.transpose, 0xf7]
-	      msgList.append(SysExEvent(midievent.port,syx))
-	      return msgList
+	      evtList.append(SysExEvent(midievent.port,syx))
+	      return evtList
 	return self.resetDisplayEvent
 
-  def generateAllNotesOff(self, port):
-	allNotesOff = []
-	for channel in range(1,17):
-	   allNotesOff.append(CtrlEvent(port, channel, 123, 0))
-	return allNotesOff
-
+  def allNotesOff(self, midievent):
+	if midievent.value>0:
+	    allnotesoff = []
+	    for ch in range(1,17):
+		allnotesoff.append(CtrlEvent(midievent.port,ch,123,0))
+	    return allnotesoff
+	else:
+	    return self.resetDisplayEvent

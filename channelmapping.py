@@ -19,9 +19,8 @@
 # If not, see <http://www.gnu.org licenses/>. 
 
 
-from mididings.event import MidiEvent
+from mididings.event import MidiEvent,NoteOffEvent,CtrlEvent
 from mididings import *
-
 class ChannelMapping:
   def __init__(self, **kwargs):
         self.lowerSourceCh = kwargs.get('lowerSourceCh')
@@ -110,6 +109,7 @@ class ChannelMapping:
               except:
                   print "No previous upper key press registered"
       return eventList
+
   def handleSustainOff(self, midiEvent):
       eventList = [midiEvent]
       if midiEvent.type==CTRL and midiEvent.ctrl==64 and midiEvent.data2<64:
@@ -133,3 +133,4 @@ class ChannelMapping:
               except:
                   print "No previous sustain registered"
       return eventList
+
