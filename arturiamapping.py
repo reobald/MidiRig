@@ -26,7 +26,7 @@ import sys
 
 class ArturiaMapping:
   def __init__(self):
-    self.transpose = 0
+    self.transpose = 64
     self.preset = 1
 
     self.resetDisplayEvent = None
@@ -144,13 +144,11 @@ class ArturiaMapping:
 
   def transposeSysex(self, midievent,transposeValue):
 	if midievent.value>0:
-	   tmp = 0 if transposeValue == 0 else self.transpose + transposeValue
+	   tmp = 64 if transposeValue == 0 else self.transpose + transposeValue
 	   if 0<= tmp <= 127:
-	      evtList = self.allNotesOff(midievent)
 	      self.transpose = tmp
 	      syx = [0xf0, 0x7f, 0x04, 0x04, 0x00, self.transpose, 0xf7]
-	      evtList.append(SysExEvent(midievent.port,syx))
-	      return evtList
+	      return SysExEvent(midievent.port,syx)
 	return self.resetDisplayEvent
 
   def allNotesOff(self, midievent):

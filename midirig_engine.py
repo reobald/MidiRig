@@ -119,15 +119,32 @@ Arturia = (SysExFilter(manufacturer=(0x00,0x20,0x6B)) | ChannelFilter(1)) % \
           CtrlFilter( arturiaMap.browseCtrlNr) % \
 		(SendOSC(oscPort,oscPrevAddr,lambda evt: evt.data2)>>Discard())\
 	  )
+#================================================
+# All notes off - because ctrl 123 is not implemented by nord
+# and also a all notes off message should send note off on all channels
+# not only one channel
+#================================================
+def allNotesOff(midievent):
+   if midievent.type==CTRL and midievent.ctrl==123:
+      allnotesoff = []
+      for ch in range(1,17):
+	allnotesoff.append(CtrlEvent(midievent.port,ch,123,0))
+      for ch in range(15,17):
+         for note in range(29,102):
+	    allnotesoff.append(NoteOffEvent(midievent.port,ch,note,0))
+         allnotesoff.append(CtrlEvent(midievent.port,ch,64,0))
+      return allnotesoff
+   return midievent	
+
 
 #================================================
 # Setup transpose infrastructure
 #================================================
 transpose = 0
-def transposeInfo(midievent):
+def setTranspose(midievent):
 	global transpose 
-	transpose = midievent.sysex[5]
-	return None
+	transpose = midievent.sysex[5]-64
+	return midievent
 
 def globalTranspose(midievent):
 	midievent.note += transpose
@@ -136,21 +153,17 @@ def globalTranspose(midievent):
 	else: 
 	   return None
 
-SetTranspose = SysExFilter([0xf0, 0x7f, 0x04, 0x04, 0x00]) % Process(transposeInfo)
+def transposeMsg(midievent):
+	global transpose
+	return "**** EDIT **** Transpose {}".format( transpose )
+
+
+SetTranspose = SysExFilter([0xf0, 0x7f, 0x04, 0x04, 0x00]) \
+		% (Process(setTranspose) \
+		>> [SendOSC(56419, "/system/preview/text", lambda e: transposeMsg(e) ) \
+		, Ctrl(123, 0)] )
 GlobalTranspose = Filter(NOTE) % Process(globalTranspose)
 
-#================================================
-# All notes off - because ctrl 123 is not implemented by nord
-#================================================
-def allNotesOff(midievent):
-   if midievent.type==CTRL and midievent.ctrl==123:
-      allnotesoff = [midievent]
-      for ch in range(15,17):
-         for note in range(29,102):
-	    allnotesoff.append(NoteOffEvent(midievent.port,ch,note,0))
-         allnotesoff.append(CtrlEvent(midievent.port,ch,64,0))
-      return allnotesoff
-   return midievent	
 
 # cc82 always on ch 16
 cc82ch16 = CtrlFilter(82) % Channel(16)

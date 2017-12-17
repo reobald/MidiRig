@@ -139,11 +139,11 @@ def updateDisplay(sevseg_info, lcd_text):
 	lock.acquire()
 	try:
    	   update7SegNumber(sevseg_info)
+	   arturia_msg = "{}: {}".format(sevseg_info, lcd_text)
    	except TypeError:
    	   update7SegText(sevseg_info)
+	   arturia_msg = "{}".format(lcd_text)
 	updateDisplayMsg(lcd_text)
-#	arturia_msg = "{:0>3}: {}".format(sevseg_info, lcd_text)
-	arturia_msg = "{}: {}".format(sevseg_info, lcd_text)
 	updateArturiaDisplay(arturia_msg)
     finally:
 	lock.release()
