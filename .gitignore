@@ -1,2 +1,5 @@
 *.pyc
 *.save
+*.save.1
+*.save.2
+
