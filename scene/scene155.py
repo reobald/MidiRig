@@ -1,6 +1,6 @@
 from mididings import *
 import default
 
-def config():
-        return default.config()
 
+def config():
+    return default.config()
