@@ -43,9 +43,9 @@ led.start()
 # the method that gets called at a midi event
 
 
-def midiactivity(midiEvent):
+def midiactivity(midi_event):
     led.blink()
-    return midiEvent
+    return midi_event
 
 # create handler for graceful exit
 
@@ -101,27 +101,27 @@ hook(
 #================================================
 # Setup midi channel translation infrastructure
 #================================================
-chMap = ChannelMapping(lowerSourceCh=2, upperSourceCh=1)
-TranslateChannel = Process(chMap.translateCh)
-PgcChannelMapping = Process(chMap.pgcChannelMapping)
-ArturiaChannelMapping = Process(chMap.arturiaChannelMapping)
-RegNoteOn = Process(chMap.regNoteOn)
-HandleNoteOff = Process(chMap.handleNoteOff)
-RegSusOn = Process(chMap.regSusOn)
-HandleSustainOff = Process(chMap.handleSustainOff)
+ch_map = ChannelMapping(lowerSourceCh=2, upperSourceCh=1)
+TranslateChannel = Process(ch_map.translateCh)
+PgcChannelMapping = Process(ch_map.pgcChannelMapping)
+ArturiaChannelMapping = Process(ch_map.arturiaChannelMapping)
+RegNoteOn = Process(ch_map.regNoteOn)
+HandleNoteOff = Process(ch_map.handleNoteOff)
+RegSusOn = Process(ch_map.regSusOn)
+HandleSustainOff = Process(ch_map.handleSustainOff)
 
 #================================================
 # Setup arturia controller number mappings
 #================================================
-oscPort = sys.argv[2]
-oscPrevAddr = "/system/preview/scene"
-arturiaMap = ArturiaMapping()
+osc_port = sys.argv[2]
+osc_prev_addr = "/system/preview/scene"
+arturia_map = ArturiaMapping()
 Arturia = (SysExFilter(manufacturer=(0x00, 0x20, 0x6B)) | ChannelFilter(1)) % \
-          (Process(arturiaMap.returnMapping) >>
-           CtrlFilter(arturiaMap.presetCtrlNr) %
+          (Process(arturia_map.returnMapping) >>
+           CtrlFilter(arturia_map.presetCtrlNr) %
            (SceneSwitch(number=EVENT_DATA2) >> Discard()) >>
-           CtrlFilter(arturiaMap.browseCtrlNr) %
-           (SendOSC(oscPort, oscPrevAddr, lambda evt: evt.data2) >> Discard())
+           CtrlFilter(arturia_map.browseCtrlNr) %
+           (SendOSC(osc_port, osc_prev_addr, lambda evt: evt.data2) >> Discard())
            )
 #================================================
 # All notes off - because ctrl 123 is not implemented by nord
@@ -130,17 +130,17 @@ Arturia = (SysExFilter(manufacturer=(0x00, 0x20, 0x6B)) | ChannelFilter(1)) % \
 #================================================
 
 
-def allNotesOff(midievent):
-    if midievent.type == CTRL and midievent.ctrl == 123:
-        allnotesoff = []
+def all_notes_off(midi_event):
+    if midi_event.type == CTRL and midi_event.ctrl == 123:
+        notes = []
         for ch in range(1, 17):
-            allnotesoff.append(CtrlEvent(midievent.port, ch, 123, 0))
+            notes.append(CtrlEvent(midi_event.port, ch, 123, 0))
         for ch in range(15, 17):
             for note in range(29, 102):
-                allnotesoff.append(NoteOffEvent(midievent.port, ch, note, 0))
-            allnotesoff.append(CtrlEvent(midievent.port, ch, 64, 0))
-        return allnotesoff
-    return midievent
+                notes.append(NoteOffEvent(midi_event.port, ch, note, 0))
+            notes.append(CtrlEvent(midi_event.port, ch, 64, 0))
+        return notes
+    return midi_event
 
 
 #================================================
@@ -149,29 +149,29 @@ def allNotesOff(midievent):
 transpose = 0
 
 
-def setTranspose(midievent):
+def set_transpose(midi_event):
     global transpose
-    transpose = midievent.sysex[5] - 64
-    return midievent
+    transpose = midi_event.sysex[5] - 64
+    return midi_event
 
 
-def globalTranspose(midievent):
-    midievent.note += transpose
-    if 0 <= midievent.note <= 127:
-        return midievent
+def global_transpose(midi_event):
+    midi_event.note += transpose
+    if 0 <= midi_event.note <= 127:
+        return midi_event
     else:
         return None
 
 
-def transposeMsg(midievent):
+def transpose_msg(midi_event):
     global transpose
     return "**** EDIT **** Transpose {}".format(transpose)
 
 
 SetTranspose = SysExFilter([0xf0, 0x7f, 0x04, 0x04, 0x00]) \
-    % (Process(setTranspose)
-       >> [SendOSC(56419, "/system/preview/text", lambda e: transposeMsg(e)), Ctrl(123, 0)])
-GlobalTranspose = Filter(NOTE) % Process(globalTranspose)
+    % (Process(set_transpose)
+       >> [SendOSC(56419, "/system/preview/text", lambda e: transpose_msg(e)), Ctrl(123, 0)])
+GlobalTranspose = Filter(NOTE) % Process(global_transpose)
 
 
 # cc82 always on ch 16
@@ -183,7 +183,7 @@ pre = Print("pre") \
     >> Process(midiactivity) >> Arturia >> Print("in")  \
     >> PgcChannelMapping >> ArturiaChannelMapping >> TranslateChannel  \
     >> RegNoteOn >> RegSusOn >> HandleNoteOff >> HandleSustainOff  \
-    >> cc82ch16 >> SetTranspose >> GlobalTranspose >> Process(allNotesOff)
+    >> cc82ch16 >> SetTranspose >> GlobalTranspose >> Process(all_notes_off)
 
 # CONTROL: select only program changes
 #control	= Filter(PROGRAM)
