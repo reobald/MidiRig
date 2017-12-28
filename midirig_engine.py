@@ -101,14 +101,14 @@ hook(
 #================================================
 # Setup midi channel translation infrastructure
 #================================================
-ch_map = ChannelMapping(lowerSourceCh=2, upperSourceCh=1)
-TranslateChannel = Process(ch_map.translateCh)
-PgcChannelMapping = Process(ch_map.pgcChannelMapping)
-ArturiaChannelMapping = Process(ch_map.arturiaChannelMapping)
-RegNoteOn = Process(ch_map.regNoteOn)
-HandleNoteOff = Process(ch_map.handleNoteOff)
-RegSusOn = Process(ch_map.regSusOn)
-HandleSustainOff = Process(ch_map.handleSustainOff)
+ch_map = ChannelMapping(lower_source_ch=2, upper_source_ch=1)
+TranslateChannel = Process(ch_map.translate_ch)
+PgcChannelMapping = Process(ch_map.pgc_channel_mapping)
+ArturiaChannelMapping = Process(ch_map.arturia_channel_mapping)
+RegNoteOn = Process(ch_map.reg_note_on)
+HandleNoteOff = Process(ch_map.handle_note_off)
+RegSusOn = Process(ch_map.reg_sus_on)
+HandleSustainOff = Process(ch_map.handle_sustain_off)
 
 #================================================
 # Setup arturia controller number mappings
@@ -117,10 +117,10 @@ osc_port = sys.argv[2]
 osc_prev_addr = "/system/preview/scene"
 arturia_map = ArturiaMapping()
 Arturia = (SysExFilter(manufacturer=(0x00, 0x20, 0x6B)) | ChannelFilter(1)) % \
-          (Process(arturia_map.returnMapping) >>
-           CtrlFilter(arturia_map.presetCtrlNr) %
+          (Process(arturia_map.return_mapping) >>
+           CtrlFilter(arturia_map.PRESET_CTRL_NR) %
            (SceneSwitch(number=EVENT_DATA2) >> Discard()) >>
-           CtrlFilter(arturia_map.browseCtrlNr) %
+           CtrlFilter(arturia_map.BROWSE_CTRL_NR) %
            (SendOSC(osc_port, osc_prev_addr, lambda evt: evt.data2) >> Discard())
            )
 #================================================

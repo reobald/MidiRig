@@ -27,52 +27,51 @@ import sys
 
 class ArturiaMapping:
     def __init__(self):
-        self.transpose = 64
-        self.preset = 1
+        self._transpose = 64
+        self._preset = 1
 
-        self.resetDisplayEvent = None
+        self._reset_display_event = None
 
-        self.toggleMemory = {}
+        self._toggle_memory = {}
 
-        self.browseCtrlNr = 114
-        self.presetCtrlNr = 115
+        self.BROWSE_CTRL_NR = 114
+        self.PRESET_CTRL_NR = 115
 
-        self.ctrlMap = {
+        self._ctrl_map = {
             12: lambda evt: CtrlEvent(evt.port, 16, 82, evt.value),
-            22: lambda evt: self.convertCtlToPgm(evt, 1),
-            23: lambda evt: self.convertCtlToPgm(evt, 2),
-            24: lambda evt: self.convertCtlToPgm(evt, 3),
-            25: lambda evt: self.convertCtlToPgm(evt, 4),
-            26: lambda evt: self.convertCtlToPgm(evt, 5),
-            27: lambda evt: self.convertCtlToPgm(evt, 6),
-            28: lambda evt: self.convertCtlToPgm(evt, 7),
-            29: lambda evt: self.convertCtlToPgm(evt, 8),
-            30: lambda evt: self.convertCtlToPgm(evt, 15),
-            31: lambda evt: self.convertCtlToPgm(evt, 16),
-            53: lambda evt: self.transposeSysex(evt, -1),
-            52: lambda evt: self.transposeSysex(evt, 1),
-            51: lambda evt: self.transposeSysex(evt, 0),
-            54: lambda evt: self.allNotesOff(evt),
-            #      50:  lambda evt: CtrlEvent(evt.port,16,82,evt.value),
-            55: lambda evt: self.toggleCtrl(CtrlEvent(evt.port, 16, 82, evt.value)),
+            22: lambda evt: self._convert_ctl_to_pgm(evt, 1),
+            23: lambda evt: self._convert_ctl_to_pgm(evt, 2),
+            24: lambda evt: self._convert_ctl_to_pgm(evt, 3),
+            25: lambda evt: self._convert_ctl_to_pgm(evt, 4),
+            26: lambda evt: self._convert_ctl_to_pgm(evt, 5),
+            27: lambda evt: self._convert_ctl_to_pgm(evt, 6),
+            28: lambda evt: self._convert_ctl_to_pgm(evt, 7),
+            29: lambda evt: self._convert_ctl_to_pgm(evt, 8),
+            30: lambda evt: self._convert_ctl_to_pgm(evt, 15),
+            31: lambda evt: self._convert_ctl_to_pgm(evt, 16),
+            53: lambda evt: self._generate_transpose_sysex_event(evt, -2),
+            52: lambda evt: self._generate_transpose_sysex_event(evt, 1),
+            51: lambda evt: self._generate_transpose_sysex_event(evt, 0),
+            54: lambda evt: self._generate_all_notes_off_events(evt),
+            55: lambda evt: self._toggle_ctrl(CtrlEvent(evt.port, 16, 82, evt.value)),
             64: lambda evt: CtrlEvent(evt.port, evt.channel, 64, 127 - evt.value),
-            114: lambda evt: self.browsePresets(evt),
-            115: lambda evt: self.selectPreset(evt),
-            118: lambda evt: self.stepPreset(evt, 0),
-            119: lambda evt: self.stepPreset(evt, 127),
+            114: lambda evt: self._browse_presets(evt),
+            115: lambda evt: self._select_preset(evt),
+            118: lambda evt: self._step_preset(evt, 0),
+            119: lambda evt: self._step_preset(evt, 127),
         }
 
-    def returnMapping(self, midiEvent):
+    def return_mapping(self, midi_event):
         try:
-            if midiEvent.type == CTRL:
-                return self.ctrlMap[midiEvent.ctrl](midiEvent)
+            if midi_event.type == CTRL:
+                return self._ctrl_map[midi_event.ctrl](midi_event)
         except KeyError:
             pass
-        if self.isArturiaSysexNameMsg(midiEvent):
-            self.resetDisplayEvent = midiEvent
-        return midiEvent
+        if self._is_arturia_sysex_name_msg(midi_event):
+            self._reset_display_event = midi_event
+        return midi_event
 
-    def toggleButtonLights(self, event):
+    def _toggle_button_lights(self, event):
         button = event.ctrl - 22
         event_list = []
         for i in range(10):
@@ -94,76 +93,72 @@ class ArturiaMapping:
             event_list.append(SysExEvent(event.port, cmd))
         return event_list
 
-    def convertCtlToPgm(self, midiEvent, program):
-        if midiEvent.value > 0:
-            port = midiEvent.port
-            channel = midiEvent.channel
+    def _convert_ctl_to_pgm(self, midi_event, program):
+        if midi_event.value > 0:
+            port = midi_event.port
+            channel = midi_event.channel
             return ProgramEvent(port, channel, program)
         else:
-            sysex_events = self.toggleButtonLights(midiEvent)
-            sysex_events.append(self.resetDisplayEvent)
+            sysex_events = self._toggle_button_lights(midi_event)
+            sysex_events.append(self._reset_display_event)
             return sysex_events
 
-    def toggleCtrl(self, midiEvent):
-        if midiEvent.value > 0:
-            toggle = self.toggleMemory.get(midiEvent.ctrl, True)
-            midiEvent.value = toggle * midiEvent.value
-            self.toggleMemory[midiEvent.ctrl] = not toggle
-            return midiEvent
+    def _toggle_ctrl(self, midi_event):
+        if midi_event.value > 0:
+            toggle = self._toggle_memory.get(midi_event.ctrl, True)
+            midi_event.value = toggle * midi_event.value
+            self._toggle_memory[midi_event.ctrl] = not toggle
+            return midi_event
         return None
 
-    def isArturiaSysexNameMsg(self, midiEvent):
-        if midiEvent.type == SYSEX:
+    def _is_arturia_sysex_name_msg(self, midi_event):
+        if midi_event.type == SYSEX:
             header = [0xf0, 0x00, 0x20, 0x6B, 0x7F, 0x42, 0x04, 0x00, 0x60]
             for i, b in enumerate(header):
-                if b != midiEvent.sysex[i]:
-                    print "no match: {}!={}".format(b, midiEvent.sysex[i])
+                if b != midi_event.sysex[i]:
+                    print "no match: {}!={}".format(b, midi_event.sysex[i])
                     return False
             return True
         else:
             return False
 
-    def browsePresets(self, midiEvent):
-        if midiEvent.data2 < 64 and self.preset > 1:
-            self.preset -= 1
-        elif self.preset < 256:
-            self.preset += 1
-        midiEvent.data2 = self.preset
-        return midiEvent
+    def _browse_presets(self, midi_event):
+        if midi_event.data2 < 64 and self._preset > 1:
+            self._preset -= 1
+        elif self._preset < 256:
+            self._preset += 1
+        midi_event.data2 = self._preset
+        return midi_event
 
-    def stepPreset(self, midiEvent, value):
-        if midiEvent.data2 > 0:
-            midiEvent.data1 = 114
-            midiEvent.data2 = value
-            return self.browsePresets(midiEvent)
+    def _step_preset(self, midi_event, value):
+        if midi_event.data2 > 0:
+            midi_event.data1 = 114
+            midi_event.data2 = value
+            return self._browse_presets(midi_event)
         else:
-            return self.resetDisplayEvent
+            return self._reset_display_event
 
-    def selectPreset(self, midiEvent):
-        if midiEvent.data2 > 0:
-            midiEvent.data2 = self.preset - 1
-            return midiEvent
+    def _select_preset(self, midi_event):
+        if midi_event.data2 > 0:
+            midi_event.data2 = self._preset - 1
+            return midi_event
         else:
-            return self.resetDisplayEvent
+            return self._reset_display_event
 
-    def printSysex(self, midiEvent):
-        for c in midiEvent.sysex:
-            print c,
-
-    def transposeSysex(self, midievent, transposeValue):
+    def _generate_transpose_sysex_event(self, midievent, transposeValue):
         if midievent.value > 0:
-            tmp = 64 if transposeValue == 0 else self.transpose + transposeValue
+            tmp = 64 if transposeValue == 0 else self._transpose + transposeValue
             if 0 <= tmp <= 127:
-                self.transpose = tmp
-                syx = [0xf0, 0x7f, 0x04, 0x04, 0x00, self.transpose, 0xf7]
+                self._transpose = tmp
+                syx = [0xf0, 0x7f, 0x04, 0x04, 0x00, self._transpose, 0xf7]
                 return SysExEvent(midievent.port, syx)
-        return self.resetDisplayEvent
+        return self._reset_display_event
 
-    def allNotesOff(self, midievent):
+    def _generate_all_notes_off_events(self, midievent):
         if midievent.value > 0:
-            allnotesoff = []
+            note_off_events = []
             for ch in range(1, 17):
-                allnotesoff.append(CtrlEvent(midievent.port, ch, 123, 0))
-            return allnotesoff
+                note_off_events.append(CtrlEvent(midievent.port, ch, 123, 0))
+            return note_off_events
         else:
-            return self.resetDisplayEvent
+            return self._reset_display_event

@@ -25,124 +25,124 @@ from mididings import *
 
 class ChannelMapping:
     def __init__(self, **kwargs):
-        self.lowerSourceCh = kwargs.get('lowerSourceCh')
-        self.upperSourceCh = kwargs.get('upperSourceCh')
-        self.lowerDestCh = kwargs.get('lowerSourceCh')
-        self.upperDestCh = kwargs.get('upperSourceCh')
-        self.currentChannel = kwargs.get('lowerSourceCh')
-        self.upperKeysPressed = {}
-        self.lowerKeysPressed = {}
-        self.lowerSustain = {}
-        self.upperSustain = {}
+        self.lower_source_ch = kwargs.get('lower_source_ch')
+        self.upper_source_ch = kwargs.get('upper_source_ch')
+        self.lower_dest_ch = kwargs.get('lower_source_ch')
+        self.upper_dest_ch = kwargs.get('upper_source_ch')
+        self.current_channel = kwargs.get('lower_source_ch')
+        self.upper_keys_pressed = {}
+        self.lower_keys_pressed = {}
+        self.lower_sustain = {}
+        self.upper_sustain = {}
 
-    def translateCh(self, midiEvent):
-        if (midiEvent.channel == self.upperSourceCh):
-            midiEvent.channel = self.upperDestCh
-        elif (midiEvent.channel == self.lowerSourceCh):
-            midiEvent.channel = self.lowerDestCh
-        return midiEvent
+    def translate_ch(self, midi_event):
+        if (midi_event.channel == self.upper_source_ch):
+            midi_event.channel = self.upper_dest_ch
+        elif (midi_event.channel == self.lower_source_ch):
+            midi_event.channel = self.lower_dest_ch
+        return midi_event
 
-    def pgcChannelMapping(self, midiEvent):
-        if (midiEvent.type == PROGRAM):
-            ch = midiEvent.program % 8
+    def pgc_channel_mapping(self, midi_event):
+        if (midi_event.type == PROGRAM):
+            ch = midi_event.program % 8
             if (ch == 0):
                 ch = 16
             if (ch == 7):
                 ch = 15
-            if(midiEvent.channel == self.lowerSourceCh):
-                self.lowerDestCh = ch
-            elif(midiEvent.channel == self.upperSourceCh):
-                self.upperDestCh = ch
+            if(midi_event.channel == self.lower_source_ch):
+                self.lower_dest_ch = ch
+            elif(midi_event.channel == self.upper_source_ch):
+                self.upper_dest_ch = ch
             return None
-        return midiEvent
+        return midi_event
 
-    def arturiaChannelMapping(self, midiEvent):
-        if(midiEvent.channel == self.upperSourceCh):
-            if (midiEvent.type == CTRL):
-                if (22 <= midiEvent.ctrl <= 29):
-                    self.upperDestCh = midiEvent.ctrl - 21
+    def arturia_channel_mapping(self, midi_event):
+        if(midi_event.channel == self.upper_source_ch):
+            if (midi_event.type == CTRL):
+                if (22 <= midi_event.ctrl <= 29):
+                    self.upper_dest_ch = midi_event.ctrl - 21
                     return None
-                elif (30 <= midiEvent.ctrl <= 31):
-                    self.upperDestCh = midiEvent.ctrl - 15
+                elif (30 <= midi_event.ctrl <= 31):
+                    self.upper_dest_ch = midi_event.ctrl - 15
                     return None
-        return midiEvent
+        return midi_event
 
-    def regNoteOn(self, midiEvent):
-        if midiEvent.type == NOTEON:
-            sourceUpper = midiEvent.channel == self.upperDestCh
-            sourceLower = midiEvent.channel == self.lowerDestCh
-            if sourceLower:
-                self.lowerKeysPressed[midiEvent.data1] = midiEvent.channel
-            if sourceUpper:
-                self.upperKeysPressed[midiEvent.data1] = midiEvent.channel
-        return midiEvent
+    def reg_note_on(self, midi_event):
+        if midi_event.type == NOTEON:
+            source_upper = midi_event.channel == self.upper_dest_ch
+            source_lower = midi_event.channel == self.lower_dest_ch
+            if source_lower:
+                self.lower_keys_pressed[midi_event.data1] = midi_event.channel
+            if source_upper:
+                self.upper_keys_pressed[midi_event.data1] = midi_event.channel
+        return midi_event
 
-    def regSusOn(self, midiEvent):
-        if midiEvent.type == CTRL and midiEvent.ctrl == 64 and midiEvent.data2 >= 64:
-            sourceUpper = midiEvent.channel == self.upperDestCh
-            sourceLower = midiEvent.channel == self.lowerDestCh
-            if sourceLower:
-                self.lowerSustain[midiEvent.data1] = midiEvent.channel
-            if sourceUpper:
-                self.upperSustain[midiEvent.data1] = midiEvent.channel
-        return midiEvent
+    def reg_sus_on(self, midi_event):
+        if midi_event.type == CTRL and midi_event.ctrl == 64 and midi_event.data2 >= 64:
+            source_upper = midi_event.channel == self.upper_dest_ch
+            source_lower = midi_event.channel == self.lower_dest_ch
+            if source_lower:
+                self.lower_sustain[midi_event.data1] = midi_event.channel
+            if source_upper:
+                self.upper_sustain[midi_event.data1] = midi_event.channel
+        return midi_event
 
-    def handleNoteOff(self, midiEvent):
-        eventList = [midiEvent]
-        if midiEvent.type == NOTEOFF:
-            sourceUpper = midiEvent.channel == self.upperDestCh
-            sourceLower = midiEvent.channel == self.lowerDestCh
-            key = midiEvent.data1
-            port = midiEvent.port
-            if sourceLower:
+    def handle_note_off(self, midi_event):
+        event_list = [midi_event]
+        if midi_event.type == NOTEOFF:
+            source_upper = midi_event.channel == self.upper_dest_ch
+            source_lower = midi_event.channel == self.lower_dest_ch
+            key = midi_event.data1
+            port = midi_event.port
+            if source_lower:
                 try:
-                    ch = self.lowerKeysPressed.get(key)
-                    eventList.append(MidiEvent(NOTEOFF, port, ch, key))
-                    del self.lowerKeysPressed[key]
+                    ch = self.lower_keys_pressed.get(key)
+                    event_list.append(MidiEvent(NOTEOFF, port, ch, key))
+                    del self.lower_keys_pressed[key]
                 except BaseException:
                     print "No previous lower key press registered"
-            if sourceUpper:
+            if source_upper:
                 try:
-                    ch = self.upperKeysPressed.get(key)
-                    midiEvent.channel = ch
-                    eventList.append(MidiEvent(NOTEOFF, port, ch, key))
-                    del self.upperKeysPressed[key]
+                    ch = self.upper_keys_pressed.get(key)
+                    midi_event.channel = ch
+                    event_list.append(MidiEvent(NOTEOFF, port, ch, key))
+                    del self.upper_keys_pressed[key]
                 except BaseException:
                     print "No previous upper key press registered"
-        return eventList
+        return event_list
 
-    def handleSustainOff(self, midiEvent):
-        eventList = [midiEvent]
-        if midiEvent.type == CTRL and midiEvent.ctrl == 64 and midiEvent.data2 < 64:
-            sourceUpper = midiEvent.channel == self.upperDestCh
-            sourceLower = midiEvent.channel == self.lowerDestCh
-            key = midiEvent.data1
-            port = midiEvent.port
-            if sourceLower:
+    def handle_sustain_off(self, midi_event):
+        event_list = [midi_event]
+        if midi_event.type == CTRL and midi_event.ctrl == 64 and midi_event.data2 < 64:
+            source_upper = midi_event.channel == self.upper_dest_ch
+            source_lower = midi_event.channel == self.lower_dest_ch
+            key = midi_event.data1
+            port = midi_event.port
+            if source_lower:
                 try:
-                    ch = self.lowerSustain.get(key)
-                    eventList.append(
+                    ch = self.lower_sustain.get(key)
+                    event_list.append(
                         MidiEvent(
                             CTRL,
                             port,
                             ch,
-                            midiEvent.data1,
-                            midiEvent.data2))
-                    del self.lowerSustain[key]
+                            midi_event.data1,
+                            midi_event.data2))
+                    del self.lower_sustain[key]
                 except BaseException:
                     print "No previous sustain registered"
-            if sourceUpper:
+            if source_upper:
                 try:
-                    ch = self.upperSustain.get(key)
-                    midiEvent.channel = ch
-                    eventList.append(
+                    ch = self.upper_sustain.get(key)
+                    midi_event.channel = ch
+                    event_list.append(
                         MidiEvent(
                             CTRL,
                             port,
                             ch,
-                            midiEvent.data1,
-                            midiEvent.data2))
-                    del self.upperSustain[key]
+                            midi_event.data1,
+                            midi_event.data2))
+                    del self.upper_sustain[key]
                 except BaseException:
                     print "No previous sustain registered"
-        return eventList
+        return event_list
