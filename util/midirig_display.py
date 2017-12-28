@@ -58,7 +58,7 @@ sysex_trx.start()
 
 
 def updateArturiaDisplay(lcd_text):
-    sysex_trx.sendText(lcd_text)
+    sysex_trx.send_text(lcd_text)
 
 
 def i2cWriteString(cmd, str):

@@ -22,30 +22,30 @@ from subprocess import check_output
 
 class ArturiaSysex():
     # Sysex base message
-    arturiaId = [0x00, 0x20, 0x6B]
-    BASE = [0xf0] + arturiaId + [0x7F, 0x42, 0x04, 0x00, 0x60]
+    ARTURIA_ID = [0x00, 0x20, 0x6B]
+    _BASE = [0xf0] + ARTURIA_ID + [0x7F, 0x42, 0x04, 0x00, 0x60]
 
-    def appendSpace(self, input):
+    def _append_space(self, input):
         l = 16 - len(input)
         for i in range(l):
             input = input + " "
         return input
 
-    def generateNameMsg(self, name):
-        two_row_name = self.splitIntoTwoRows(name)
-        result = list(self.BASE)
-        rowNr = 0x01
+    def generate_name_msg(self, name):
+        two_row_name = self._split_into_two_rows(name)
+        result = list(self._BASE)
+        row_nr = 0x01
         for row in two_row_name:
-            result.append(rowNr)
-            row = self.appendSpace(row)
+            result.append(row_nr)
+            row = self._append_space(row)
             row = map(ord, row)
             result += row
             result.append(0x00)
-            rowNr += 1
+            row_nr += 1
         result.append(0xf7)
         return result
 
-    def splitIntoTwoRows(self, st):
+    def _split_into_two_rows(self, st):
         st = st.strip()
         if len(st) <= 16:
             return [st, ""]
@@ -56,8 +56,8 @@ class ArturiaSysex():
 
         return [st[0:i].strip(), (st[i:].strip())[0:16]]
 
-    def generateNameMsgAsStr(self, name):
-        bytes = self.generateNameMsg(name)
+    def generate_name_msg_as_str(self, name):
+        bytes = self.generate_name_msg(name)
         return ' '.join('{:02x}'.format(x) for x in bytes)
 
 
@@ -65,64 +65,67 @@ class ArturiaSysexTransmitter(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self.stop_event = threading.Event()
-        self.alsaseq = Sequencer(clientname="MidiRigDisplay")
-        #self.alsaseq.clientname = "MidiRigDisplay"
-        if not self.alsaseq:
+        self._alsaseq = Sequencer(clientname="MidiRigDisplay")
+        if not self._alsaseq:
             print "Failed to create alsaseq.Sequenser()"
-        self.sysexHelper = ArturiaSysex()
-        self.portId = -1
-        self.portId = self.alsaseq.create_simple_port(
-            name='out',
-            type=SEQ_PORT_TYPE_APPLICATION,
-            caps=SEQ_PORT_CAP_SUBS_READ | SEQ_PORT_CAP_READ | SEQ_PORT_CAP_WRITE | SEQ_PORT_CAP_SUBS_WRITE)
+        self._sysex_helper = ArturiaSysex()
+        self._port_id = -1
+        self._port_id = self._alsaseq.create_simple_port(
+            name = 'out',
+            type = SEQ_PORT_TYPE_APPLICATION,
+            caps = SEQ_PORT_CAP_SUBS_READ | \
+                   SEQ_PORT_CAP_READ | \
+                   SEQ_PORT_CAP_WRITE | \
+                   SEQ_PORT_CAP_SUBS_WRITE)
 
-        print "portId {}".format(self.portId)
-        self.midirig = None
-        self.midirig_display = None
-        self.connected = self.connect()
-        self.printConnections()
+        print "_port_id {}".format(self._port_id)
+        self._midirig = None
+        self._midirig_display = None
+        self._connected = self.connect()
+        self._print_connections()
 
     def run(self):
         while not self.stop_event.is_set():
             time.sleep(0.1)
             try:
-                self.alsaseq.drain_output()
+                self._alsaseq.drain_output()
             except SequencerError:
                 pass
 
-    def getMidiRigAddress(self):
+    def _get_midirig_address(self):
         out = check_output(["aconnect", "-o"])
         i = out.find('MidiRigDisplay_in')
         if i > -1:
             i -= 4
-            portId = out[i:(i + 3)].strip()
+            _port_id = out[i:(i + 3)].strip()
             i = out.find('MidiRig')
             i -= 6
-            clientId = out[i:(i + 3)].strip()
-            return (int(clientId), int(portId))
+            client_id = out[i:(i + 3)].strip()
+            return (int(client_id), int(_port_id))
         return None
 
-    def getMidiRigDisplayAddress(self):
-        address = self.alsaseq.clientname + ":" + str(self.portId)
-        return self.alsaseq.parse_address(address)
+    def _get_midirig_display_address(self):
+        address = self._alsaseq.clientname + ":" + str(self._port_id)
+        return self._alsaseq.parse_address(address)
 
-    def sendText(self, text):
-        syx = self.sysexHelper.generateNameMsg(text)
-        evt = self.createEvent(syx)
-        self.alsaseq.output_event(evt)
+    def send_text(self, text):
+        syx = self._sysex_helper.generate_name_msg(text)
+        evt = self._create_event(syx)
+        self._alsaseq.output_event(evt)
 
-    def createEvent(self, sysexdata):
+    def _create_event(self, sysexdata):
         event = SeqEvent(SEQ_EVENT_SYSEX, SEQ_TIME_STAMP_REAL)
         event.set_data({'ext': sysexdata})
         return event
 
     def connect(self):
         try:
-            self.midirig_display = self.getMidiRigDisplayAddress()
-            print "address: {}".format(self.midirig_display)
-            self.midirig = self.getMidiRigAddress()
-            if self.midirig:
-                self.alsaseq.connect_ports(self.midirig_display, self.midirig)
+            self._midirig_display = self._get_midirig_display_address()
+            print "address: {}".format(self._midirig_display)
+            self._midirig = self._get_midirig_address()
+            if self._midirig:
+                self._alsaseq.connect_ports(
+                    self._midirig_display, self._midirig)
                 print "Connection successful"
                 return True
             else:
@@ -135,32 +138,11 @@ class ArturiaSysexTransmitter(threading.Thread):
     def stop(self):
         self.stop_event.set()
 
-    def printConnections(self):
-        conlist = self.alsaseq.connection_list()
+    def _print_connections(self):
+        conlist = self._alsaseq.connection_list()
         for c in conlist:
             print "{}, ".format(c[0]),
             for p in c[2]:
                 print "{}, ".format(p[0]),
                 for cl in p[2]:
                     print "\t{}".format(cl)
-
-
-#  "connection_list() -> list\n"
-#  "\n"
-#  "List all clients and their ports connections.\n"
-#  "\n"
-#  "Returns:\n"
-#  "  (list) a list of tuples: client_name, client_id, port_list:.\n"
-#  "    client_name -- the client's name.\n"
-#  "    client_id -- the client's id.\n"
-#  "    port_list -- a list of tuples: port_name, port_id, connection_list:\n"
-#  "      port_name -- the name of the port.\n"
-#  "      port_id -- the port id.\n"
-#  "      connection_list -- a list of tuples: read_conn, write_conn:\n"
-#  "        read_conn -- a list of (client_id, port_id, info) tuples this\n"
-#  "                     port is connected to (sends events);\n"
-#  "                     info is the same of the get_connect_info() method.\n"
-#  "        write_conn -- a list of (client_id, port_id, info) tuples this\n"
-#  "                      port is connected from (receives events);\n"
-#  "                      info is the same of the get_connect_info() method.\n"
-#);
