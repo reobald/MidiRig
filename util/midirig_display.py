@@ -240,7 +240,7 @@ server.add_method("/mididings/end_scenes", '', end_scenes_cb)
 
 
 def current_scene_cb(path, args):
-    previewer.cancelPreview()
+    previewer.cancel_preview()
     global currentScene
     currentScene = args[0]
     sceneName = getSceneName(currentScene)

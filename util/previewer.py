@@ -23,36 +23,31 @@ class Previewer(threading.Thread):
     def __init__(self, display_cb):
         threading.Thread.__init__(self)
         self.stop_event = threading.Event()
-        self.originalLed = 0
-        self.originalLcd = 0
+        self.original_led = 0
+        self.original_lcd = 0
         self.updated = 0
         self.previewing = False
-        self.updateDisplay = display_cb
+        self.update_display = display_cb
 
     def run(self):
         while not self.stop_event.is_set():
             if (self.previewing):
                 now = time.time()
-                passedTime = now - self.updated
-                if(passedTime > 2):
-                    self.updateDisplay(self.originalLed, self.originalLcd)
+                passed_time = now - self.updated
+                if(passed_time > 2):
+                    self.update_display(self.original_led, self.original_lcd)
                     self.previewing = False
             time.sleep(2)
 
-    def preview(self, origLed, origLcd, newLed, newLcd):
-        self.originalLed = origLed
-        self.originalLcd = origLcd
-        self.updateDisplay(newLed, newLcd)
+    def preview(self, orig_led, orig_lcd, new_led, new_lcd):
+        self.original_led = orig_led
+        self.original_lcd = orig_lcd
+        self.update_display(new_led, new_lcd)
         self.previewing = True
-        self.setTimeStamp()
-#    def preview(self,browsed, original):
-#	self.originalSound = original
-#	self.updateDisplay(browsed);
-#	self.browsing = True
-#	self.setTimeStamp()
+        self._set_time_stamp()
 
-    def setTimeStamp(self):
+    def _set_time_stamp(self):
         self.updated = time.time()
 
-    def cancelPreview(self):
+    def cancel_preview(self):
         self.previewing = False
