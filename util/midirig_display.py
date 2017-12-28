@@ -31,7 +31,7 @@ from arturia_sysex import ArturiaSysexTransmitter
 data_offset = 0
 scenes = {}
 tmp_scenes = {}
-currentScene = 0
+current_scene = 0
 
 # I2C
 i2cbus = smbus.SMBus(1)
@@ -57,33 +57,33 @@ sysex_trx = ArturiaSysexTransmitter()
 sysex_trx.start()
 
 
-def updateArturiaDisplay(lcd_text):
+def update_arturia_display(lcd_text):
     sysex_trx.send_text(lcd_text)
 
 
-def i2cWriteString(cmd, str):
+def i2c_write_string(cmd, str):
     datalist = map(ord, str)
     i2cbus.write_i2c_block_data(i2caddress, cmd, datalist)
     print("Raspberry pi: {0}, {1}, {2}".format(i2caddress, cmd, datalist))
 
 
-def i2cWriteByte(cmd, value):
+def i2c_write_byte(cmd, value):
     i2cbus.write_byte_data(i2caddress, cmd, value)
     print("Raspberry pi: {0}, {1}, {2}".format(i2caddress, cmd, value))
 
 
-def i2cWriteBytes(cmd, bytes):
+def i2c_write_bytes(cmd, bytes):
     i2cbus.write_i2c_block_data(i2caddress, cmd, bytes)
     print("Raspberry pi: {0}, {1}, {2}".format(i2caddress, cmd, bytes))
 
 
-def toBytes(input):
+def to_bytes(input):
     byte1 = input & 255
     byte2 = input >> 8
     return [byte1, byte2]
 
 
-def i2cWaitForAck():
+def i2c_wait_for_ack():
     for i in range(100):
         time.sleep(0.001)
         result = i2cbus.read_byte(i2caddress)
@@ -97,7 +97,7 @@ def i2cWaitForAck():
     return False
 
 
-def splitIntoTwoRows(st):
+def split_into_two_rows(st):
     st = st.strip()
     if len(st) <= 16:
         return [st, ""]
@@ -109,58 +109,58 @@ def splitIntoTwoRows(st):
     return [st[0:i].strip(), st[i:].strip()]
 
 
-def getSceneName(sceneNumber):
+def get_scene_name(scene_number):
     global scenes
     try:
-        sceneInfo = scenes[sceneNumber]
-        name = sceneInfo[0]
+        scene_info = scenes[scene_number]
+        name = scene_info[0]
     except KeyError:
         name = "Unknown"
     return name
 
 
-def update7SegNumber(sceneNumber):
-    bytes = toBytes(sceneNumber)
-    i2cWriteBytes(UPDATE_SEVEN_SEG_NUMBER, bytes)
-    if not i2cWaitForAck():
+def update_7seg_number(scene_number):
+    bytes = to_bytes(scene_number)
+    i2c_write_bytes(UPDATE_SEVEN_SEG_NUMBER, bytes)
+    if not i2c_wait_for_ack():
         return
 
 
-def update7SegText(txt):
-    i2cWriteString(UPDATE_SEVEN_SEG_TEXT, txt)
-    if not i2cWaitForAck():
+def update_7seg_text(txt):
+    i2c_write_string(UPDATE_SEVEN_SEG_TEXT, txt)
+    if not i2c_wait_for_ack():
         return
 
 
-def updateDisplayMsg(inputText):
-    dividedText = splitIntoTwoRows(inputText)
+def update_display_msg(input_text):
+    divided_text = split_into_two_rows(input_text)
 
-    i2cWriteByte(CLEAR_LCD, ALL)
-    if not i2cWaitForAck():
+    i2c_write_byte(CLEAR_LCD, ALL)
+    if not i2c_wait_for_ack():
         return
-    i2cWriteString(UPDATE_LCD_ROW1, dividedText[ROW1])
-    if not i2cWaitForAck():
+    i2c_write_string(UPDATE_LCD_ROW1, divided_text[ROW1])
+    if not i2c_wait_for_ack():
         return
-    i2cWriteString(UPDATE_LCD_ROW2, dividedText[ROW2])
-    if not i2cWaitForAck():
+    i2c_write_string(UPDATE_LCD_ROW2, divided_text[ROW2])
+    if not i2c_wait_for_ack():
         return
 
 
 lock = threading.Lock()
 
 
-def updateDisplay(sevseg_info, lcd_text):
-    print "updateDisplay: {}".format(lcd_text)
+def update_display(sevseg_info, lcd_text):
+    print "update_display: {}".format(lcd_text)
     try:
         lock.acquire()
         try:
-            update7SegNumber(sevseg_info)
+            update_7seg_number(sevseg_info)
             arturia_msg = "{}: {}".format(sevseg_info, lcd_text)
         except TypeError:
-            update7SegText(sevseg_info)
+            update_7seg_text(sevseg_info)
             arturia_msg = "{}".format(lcd_text)
-        updateDisplayMsg(lcd_text)
-        updateArturiaDisplay(arturia_msg)
+        update_display_msg(lcd_text)
+        update_arturia_display(arturia_msg)
     finally:
         lock.release()
 
@@ -172,7 +172,7 @@ except liblo.ServerError as err:
     print(err)
     sys.exit()
 
-previewer = Previewer(updateDisplay)
+previewer = Previewer(update_display)
 previewer.start()
 
 # create handler for graceful exit
@@ -241,10 +241,10 @@ server.add_method("/mididings/end_scenes", '', end_scenes_cb)
 
 def current_scene_cb(path, args):
     previewer.cancel_preview()
-    global currentScene
-    currentScene = args[0]
-    sceneName = getSceneName(currentScene)
-    updateDisplay(currentScene, sceneName)
+    global current_scene
+    current_scene = args[0]
+    scene_name = get_scene_name(current_scene)
+    update_display(current_scene, scene_name)
     print(path, args)
 
 
@@ -255,11 +255,11 @@ server.add_method("/mididings/current_scene", 'ii', current_scene_cb)
 
 def system_preview_scene_cb(path, args):
     print(path, args)
-    previewLed = args[0]
-    previewLcd = getSceneName(previewLed)
-    origLed = currentScene
-    origLcd = getSceneName(currentScene)
-    previewer.preview(origLed, origLcd, previewLed, previewLcd)
+    preview_led = args[0]
+    preview_lcd = get_scene_name(preview_led)
+    orig_led = current_scene
+    orig_lcd = get_scene_name(current_scene)
+    previewer.preview(orig_led, orig_lcd, preview_led, preview_lcd)
 
 
 server.add_method("/system/preview/scene", 'i', system_preview_scene_cb)
@@ -269,11 +269,11 @@ server.add_method("/system/preview/scene", 'i', system_preview_scene_cb)
 
 def system_preview_text_cb(path, args):
     print(path, args)
-    previewLed = "   "
-    previewLcd = args[0]
-    origLed = currentScene
-    origLcd = getSceneName(currentScene)
-    previewer.preview(origLed, origLcd, previewLed, previewLcd)
+    preview_led = "   "
+    preview_lcd = args[0]
+    orig_led = current_scene
+    orig_lcd = get_scene_name(current_scene)
+    previewer.preview(orig_led, orig_lcd, preview_led, preview_lcd)
 
 
 server.add_method("/system/preview/text", 's', system_preview_text_cb)
@@ -282,7 +282,7 @@ server.add_method("/system/preview/text", 's', system_preview_text_cb)
 
 
 def system_msg_cb(path, args):
-    updateDisplay("---", args[0])
+    update_display("---", args[0])
     print(path, args)
 
 
