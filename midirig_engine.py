@@ -22,7 +22,6 @@
 import sys
 import signal
 import scene
-#from arturia import ArturiaNRPN
 from mididings import *
 from mididings.extra.gm import *
 from mididings.extra.osc import OSCInterface

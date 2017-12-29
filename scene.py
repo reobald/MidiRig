@@ -1,5 +1,5 @@
 from mididings import *
-from customunits import ProgramChange
+from customunits import ProgramChange,ConvertExpression, ConnectSusPedals
 from mididings.extra import *
 from roland_sysex import Integra7Sysex
 
@@ -55,14 +55,15 @@ def africa():
 
 
 def evelina():
-    return Scene(
-        "Evelina", (ChannelFilter(4) & CtrlFilter(11)) %
-        ConvertExpression(
-            4, 74) >> CtrlRange(
-            74, 20, 120), [
-                ProgramChange(
-                    1, "STUDIO SET", 5), ProgramChange(
-                        16, "NORD ELECTRO", 1)])
+    return Scene("Evelina", 
+                  (ChannelFilter(4) & CtrlFilter(11)) % \
+                   ConvertExpression(4, 74) >> \
+                   CtrlRange(74, 20, 120), 
+                   [
+                        ProgramChange(1, "STUDIO SET", 5), 
+                        ProgramChange(16, "NORD ELECTRO", 1)
+                   ]
+                )
 
 
 def bara_minnen():
@@ -188,9 +189,6 @@ def on_my_own():
                  )
 
 
-6
-
-
 def paradise():
     return Scene("Paradise",
                  Pass(),
@@ -273,16 +271,6 @@ def play_that_funky_music():
                  [
                      ProgramChange(1, "STUDIO SET", 24),
                      ProgramChange(16, "NORD ELECTRO", 6)
-                 ]
-                 )
-
-
-def default():
-    return Scene("Default",
-                 Pass(),
-                 [
-                     ProgramChange(1, "STUDIO SET", 25),
-                     ProgramChange(16, "NORD ELECTRO", 1)
                  ]
                  )
 
@@ -570,16 +558,18 @@ def appaloosa():
 def in_the_air_tonight():
     ifExprOnMidiCh2 = (ChannelFilter(2) & CtrlFilter(11))
     ifChannel2 = ChannelFilter(2)
-    return Scene(
-        "In the Air Tonight", ifExprOnMidiCh2 %
-        (Channel(3) >> CtrlMap(
-            11, 74) >> CtrlRange(
-            74, 40, 127)) >> ifChannel2 %
-        [
-            Pass(), Channel(3)], [
-            ProgramChange(
-                1, "STUDIO SET", 51), ProgramChange(
-                16, "NORD ELECTRO", 1)])
+    return Scene("In the Air Tonight", 
+                ifExprOnMidiCh2 % \
+                (Channel(3) >> \
+                CtrlMap( 11, 74) >> \
+                CtrlRange(74, 40, 127)) >> \
+                ifChannel2 %
+                    [ Pass(), Channel(3)], 
+                    [
+                        ProgramChange(1, "STUDIO SET", 51), 
+                        ProgramChange(16, "NORD ELECTRO", 1)
+                    ]
+                    )
 
 
 def cant_take_my_eyes_off_you():

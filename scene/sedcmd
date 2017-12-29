@@ -1,1 +1,0 @@
-for f in scene*.py; do sed -i.old '1s;^;from mididings import *\n;' scene256.py ; done
