@@ -42,65 +42,19 @@ def good_riddance():
                      ProgramChange(16, "NORD ELECTRO", 1)
                  ]
                  )
+from africa_solo import AfricaSoloHarmony
+africa_harmony_generator = AfricaSoloHarmony()
 
-africa_keyswitch = [0,0,0,0,0]
-africa_part_on = True
 def africa():
-    solo_part = {
-        87:83,
-        85:80,
-        83:78,
-        80:75,
-        78:73,
-        75:71,
-        73:68,
-        71:66,
-        68:63}
-
-    def reset_globals(midi_event):
-        global africa_keyswitch
-        global africa_part_on
-        africa_keyswitch = [0,0,0,0,0]
-        africa_part_on = True
-
-    def reg_key(midi_event):
-        global africa_keyswitch
-        if midi_event.type == NOTEOFF:
-            index = africa_keyswitch[4]
-            africa_keyswitch[index] = midi_event.note
-            africa_keyswitch[4]=(index+1)&3
+    def initialize_harmony_generator(midi_event):
+        global africa_harmony_generator
+        africa_harmony_generator = AfricaSoloHarmony()
         return midi_event
-
-    def generate_solo_part(midi_event):
-        if midi_event.type not in [NOTEON,NOTEOFF]:
-            return midi_event
-        global africa_keyswitch
-        global africa_part_on
-        events = [midi_event]
-        if africa_part_on:
-            midi_event2 = MidiEvent(midi_event.type, 
-                                    midi_event.port,
-                                    midi_event.channel,
-                                    solo_part.get(
-                                        midi_event.note,
-                                        midi_event.note),
-                                    midi_event.velocity)
-            events.append(midi_event2)
-        if set(africa_keyswitch[0:4])==set([73,73,68,68]):
-            africa_part_on = False
-        elif set(africa_keyswitch[0:4])==set([57,57,61,61]):
-            africa_part_on = True
-        return events
-
-    def SoloPart():
-        return (ChannelFilter(4) & \
-                KeyFilter(notes=[87,85,83,80,78,75,73,71,68,57,61])) %\
-                Process(generate_solo_part)
                  
     return Scene("Africa",
-                Process(reg_key)>>SoloPart(),
+                (ChannelFilter(4) % Process(africa_harmony_generator.add_part)),
                  [
-                     Process(reset_globals),
+                     Process(initialize_harmony_generator),
                      ProgramChange(1, "STUDIO SET", 4),
                      ProgramChange(16, "NORD ELECTRO", 1)
                  ]
