@@ -58,7 +58,6 @@ def africa():
         68:63}
 
     def reset_globals(midi_event):
-        print "reset globals"
         global africa_keyswitch
         global africa_part_on
         africa_keyswitch = [0,0,0,0,0]
@@ -70,10 +69,11 @@ def africa():
             index = africa_keyswitch[4]
             africa_keyswitch[index] = midi_event.note
             africa_keyswitch[4]=(index+1)&3
-            print "reg_key: {}".format(africa_keyswitch)
         return midi_event
 
     def generate_solo_part(midi_event):
+        if midi_event.type not in [NOTEON,NOTEOFF]:
+            return midi_event
         global africa_keyswitch
         global africa_part_on
         events = [midi_event]
@@ -89,13 +89,10 @@ def africa():
         switch_off_value = 282 # 73+73+68+68
         switch_on_value = 236 # 57+57+61+61
         checksum = sum(africa_keyswitch[0:4])
-        print  africa_keyswitch       
         if checksum == switch_off_value:
             africa_part_on = False
-            print "africa switch off"
         elif checksum == switch_on_value:
             africa_part_on = True
-            print "africa switch off"
         return events
 
     def SoloPart():
