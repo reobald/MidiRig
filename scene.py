@@ -9,7 +9,7 @@ def default():
     return Scene("Default",
                 Pass(),
                 [
-                    ProgramChange(1, "STUDIO SET", 25),
+                    ProgramChange(1, "STUDIO SET", 18),
                     ProgramChange(16, "NORD ELECTRO", 1)
                 ]
                 )
@@ -35,11 +35,11 @@ def andetag():
                  )
 
 
-def good_riddance():
-    return Scene("Good riddance",
+def _24_k_magic():
+    return Scene("24K Magic",
                  Pass(),
                  [
-                     ProgramChange(1, "STUDIO SET", 3),
+                     ProgramChange(1, "STUDIO SET", 36),
                      ProgramChange(16, "NORD ELECTRO", 1)
                  ]
                  )
@@ -242,7 +242,7 @@ def human_nature():
 
 def billie_jean():
     return Scene("Billie Jean",
-                 CtrlFilter(82) % SceneSwitch(number=44),
+                 CtrlFilter(82) % SceneSwitch(number=45),
                  [
                      ProgramChange(1, "STUDIO SET", 22),
                      ProgramChange(16, "NORD ELECTRO", 1)
@@ -573,8 +573,8 @@ def in_the_air_tonight():
                     )
 
 
-def cant_take_my_eyes_off_you():
-    return Scene("Cant take My Eyes Off You",
+def hard_to_handle():
+    return Scene("Hard to handle",
                  Pass(),
                  [
                      ProgramChange(1, "STUDIO SET", 52),
@@ -703,5 +703,15 @@ def higher_ground():
                  [
                      ProgramChange(1, "STUDIO SET", 45),
                      ProgramChange(16, "NORD ELECTRO", 6)
+                 ]
+                 )
+
+
+def lets_go_crazy():
+    return Scene("Let's go crazy",
+                 Pass(),
+                 [
+                     ProgramChange(1, "STUDIO SET", 56),
+                     ProgramChange(16, "NORD ELECTRO", 1)
                  ]
                  )
