@@ -86,12 +86,9 @@ def africa():
                                         midi_event.note),
                                     midi_event.velocity)
             events.append(midi_event2)
-        switch_off_value = 282 # 73+73+68+68
-        switch_on_value = 236 # 57+57+61+61
-        checksum = sum(africa_keyswitch[0:4])
-        if checksum == switch_off_value:
+        if set(africa_keyswitch[0:4])==set([73,73,68,68]):
             africa_part_on = False
-        elif checksum == switch_on_value:
+        elif set(africa_keyswitch[0:4])==set([57,57,61,61]):
             africa_part_on = True
         return events
 
