@@ -2,7 +2,7 @@ from mididings import *
 from customunits import ProgramChange,ConvertExpression, ConnectSusPedals
 from mididings.extra import *
 from roland_sysex import Integra7Sysex
-
+from mididings.event import MidiEvent
 
 def default():
     return Scene("Default",
@@ -43,15 +43,74 @@ def good_riddance():
                  ]
                  )
 
-
+africa_keyswitch = [0,0,0,0,0]
+africa_part_on = True
 def africa():
+    solo_part = {
+        87:83,
+        85:80,
+        83:78,
+        80:75,
+        78:73,
+        75:71,
+        73:68,
+        71:66,
+        68:63}
+
+    def reset_globals(midi_event):
+        print "reset globals"
+        global africa_keyswitch
+        global africa_part_on
+        africa_keyswitch = [0,0,0,0,0]
+        africa_part_on = True
+
+    def reg_key(midi_event):
+        global africa_keyswitch
+        if midi_event.type == NOTEOFF:
+            index = africa_keyswitch[4]
+            africa_keyswitch[index] = midi_event.note
+            africa_keyswitch[4]=(index+1)&3
+            print "reg_key: {}".format(africa_keyswitch)
+        return midi_event
+
+    def generate_solo_part(midi_event):
+        global africa_keyswitch
+        global africa_part_on
+        events = [midi_event]
+        if africa_part_on:
+            midi_event2 = MidiEvent(midi_event.type, 
+                                    midi_event.port,
+                                    midi_event.channel,
+                                    solo_part.get(
+                                        midi_event.note,
+                                        midi_event.note),
+                                    midi_event.velocity)
+            events.append(midi_event2)
+        switch_off_value = 282 # 73+73+68+68
+        switch_on_value = 236 # 57+57+61+61
+        checksum = sum(africa_keyswitch[0:4])
+        print  africa_keyswitch       
+        if checksum == switch_off_value:
+            africa_part_on = False
+            print "africa switch off"
+        elif checksum == switch_on_value:
+            africa_part_on = True
+            print "africa switch off"
+        return events
+
+    def SoloPart():
+        return (ChannelFilter(4) & \
+                KeyFilter(notes=[87,85,83,80,78,75,73,71,68,57,61])) %\
+                Process(generate_solo_part)
+                 
     return Scene("Africa",
-                 Pass(),
+                Process(reg_key)>>SoloPart(),
                  [
+                     Process(reset_globals),
                      ProgramChange(1, "STUDIO SET", 4),
                      ProgramChange(16, "NORD ELECTRO", 1)
                  ]
-                 )
+                ) 
 
 
 def evelina():
