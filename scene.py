@@ -3,6 +3,7 @@ from customunits import ProgramChange,ConvertExpression, ConnectSusPedals
 from mididings.extra import *
 from roland_sysex import Integra7Sysex
 from mididings.event import MidiEvent
+from africa_solo import ResetAfricaSolo, HarmonizeAfricaSolo
 
 def default():
     return Scene("Default",
@@ -42,19 +43,12 @@ def good_riddance():
                      ProgramChange(16, "NORD ELECTRO", 1)
                  ]
                  )
-from africa_solo import AfricaSoloHarmony
-africa_harmony_generator = AfricaSoloHarmony()
 
 def africa():
-    def initialize_harmony_generator(midi_event):
-        global africa_harmony_generator
-        africa_harmony_generator = AfricaSoloHarmony()
-        return midi_event
-                 
     return Scene("Africa",
-                (ChannelFilter(4) % Process(africa_harmony_generator.add_part)),
+                (ChannelFilter(4) % HarmonizeAfricaSolo()),
                  [
-                     Process(initialize_harmony_generator),
+                     ResetAfricaSolo(),
                      ProgramChange(1, "STUDIO SET", 4),
                      ProgramChange(16, "NORD ELECTRO", 1)
                  ]
