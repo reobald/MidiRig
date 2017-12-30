@@ -1,5 +1,5 @@
 from mididings.event import MidiEvent
-from mididings import *
+from mididings import NOTEON,NOTEOFF,Process
 
 class AfricaSolo:
     _current_index = 0
@@ -18,33 +18,32 @@ class AfricaSolo:
         71: 66,
         68: 63}
 
-    @staticmethod
-    def reset(midi_event):
-        AfricaSolo._current_index = 0
-        AfricaSolo._key_list = [0, 0, 0, 0]
-        AfricaSolo._harmony_part_on = True
+    @classmethod
+    def reset(cls,midi_event):
+        cls._current_index = 0
+        cls._key_list = [0, 0, 0, 0]
+        cls._harmony_part_on = True
 
-    @staticmethod
-    def _register_key(midi_event):
+    @classmethod
+    def _register_key(cls,midi_event):
         if midi_event.type == NOTEOFF:
-            AfricaSolo._key_list[AfricaSolo._current_index] = midi_event.note
-            AfricaSolo._increment_index()
-            print AfricaSolo._key_list
+            cls._key_list[cls._current_index] = midi_event.note
+            cls._increment_index()
         return midi_event
 
-    @staticmethod
-    def _increment_index():
-        AfricaSolo._current_index = (AfricaSolo._current_index+1)&3
+    @classmethod
+    def _increment_index(cls):
+        cls._current_index = (AfricaSolo._current_index+1)&3
 
-    @staticmethod
-    def _generate_harmony_part(midi_event):
+    @classmethod
+    def _generate_harmony_part(cls,midi_event):
         if midi_event.type not in [NOTEON, NOTEOFF]:
             return midi_event
-        if midi_event.note not in AfricaSolo._harmony_mapping.keys():
+        if midi_event.note not in cls._harmony_mapping.keys():
             return midi_event
         events = [midi_event]
-        if AfricaSolo._harmony_part_on:
-            note = AfricaSolo._harmony_mapping.get(midi_event.note,
+        if cls._harmony_part_on:
+            note = cls._harmony_mapping.get(midi_event.note,
                                              midi_event.note)
             midi_event2 = MidiEvent(
                 midi_event.type,
@@ -55,18 +54,18 @@ class AfricaSolo:
             events.append(midi_event2)
         return events
 
-    @staticmethod
-    def _toggle_harmony_part():
-        if set(AfricaSolo._key_list) == AfricaSolo._toggle_off_keys:
-            AfricaSolo._harmony_part_on = False
-        elif set(AfricaSolo._key_list) == AfricaSolo._toggle_on_keys:
-            AfricaSolo._harmony_part_on = True
+    @classmethod
+    def _toggle_harmony_part(cls):
+        if set(cls._key_list) == cls._toggle_off_keys:
+            cls._harmony_part_on = False
+        elif set(cls._key_list) == cls._toggle_on_keys:
+            cls._harmony_part_on = True
 
-    @staticmethod
-    def add_part(midi_event):
-        AfricaSolo._register_key(midi_event)
-        events = AfricaSolo._generate_harmony_part(midi_event)
-        AfricaSolo._toggle_harmony_part()
+    @classmethod
+    def add_part(cls,midi_event):
+        cls._register_key(midi_event)
+        events = cls._generate_harmony_part(midi_event)
+        cls._toggle_harmony_part()
         return events
 
 def ResetAfricaSolo():
