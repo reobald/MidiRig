@@ -31,6 +31,7 @@ from mididings.event import NoteOffEvent, CtrlEvent
 from blinkingled import BlinkingLed
 from channelmapping import ChannelMapping
 from arturiamapping import ArturiaMapping
+from constants import *
 #=================================
 # setup midiactivity indicator led
 #=================================
@@ -70,15 +71,14 @@ config(
     client_name='MidiRig',
     # name ports and connect them to alsa client
     in_ports=[
-      ('default in', 'Virtual Raw MIDI 0-0.*:0'),
-      ('KeyLab_in', 'KeyLab.*:0'),
-      ('INTEGRA-7_in', 'INTEGRA-7.*:0'),
-      ('MidiRigDisplay_in', 'MidiRigDisplay.*:0')
+      (DEFAULT_IN_PORT, 'Virtual Raw MIDI 0-0.*:0'),
+      (KEYLAB_IN_PORT, 'KeyLab.*:0'),
+      (INTEGRA7_IN_PORT, 'INTEGRA-7.*:0'),
+      (MIDIRIG_DISPLAY_IN_PORT, 'MidiRigDisplay.*:0')
     ],
     out_ports=[
-        #('KeyLab_out',    'KeyLab.*:0'),
-        ('KeyLab_out', 'KeyLab 61.*:0'),
-        ('INTEGRA-7_out', 'INTEGRA-7.*:0'),
+        (KEYLAB_OUT_PORT, 'KeyLab 61.*:0'),
+        (INTEGRA7_OUT_PORT, 'INTEGRA-7.*:0'),
     ],
     # ...or just change the number of ports available    #in_ports=2,
 
@@ -115,13 +115,19 @@ HandleSustainOff = Process(ch_map.handle_sustain_off)
 osc_port = sys.argv[2]
 osc_prev_addr = "/system/preview/scene"
 arturia_map = ArturiaMapping()
-Arturia = (SysExFilter(manufacturer=(0x00, 0x20, 0x6B)) | ChannelFilter(1)) % \
-          (Process(arturia_map.return_mapping) >>
-           CtrlFilter(arturia_map.PRESET_CTRL_NR) %
-           (SceneSwitch(number=EVENT_DATA2) >> Discard()) >>
-           CtrlFilter(arturia_map.BROWSE_CTRL_NR) %
-           (SendOSC(osc_port, osc_prev_addr, lambda evt: evt.data2) >> Discard())
-           )
+Arturia = (
+    SysExFilter(
+        manufacturer=(
+            0x00,
+            0x20,
+            0x6B)) | ChannelFilter(1)) % (Process(
+                arturia_map.return_mapping) >> CtrlFilter(
+                    arturia_map.PRESET_CTRL_NR) % (SceneSwitch(
+                        number=EVENT_DATA2) >> Discard()) >> CtrlFilter(
+                            arturia_map.BROWSE_CTRL_NR) % (SendOSC(
+                                osc_port,
+                                osc_prev_addr,
+                                lambda evt: evt.data2) >> Discard()))
 #================================================
 # All notes off - because ctrl 123 is not implemented by nord
 # and also a all notes off message should send note off on all channels

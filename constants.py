@@ -16,7 +16,14 @@
 # If not, see <http://www.gnu.org licenses/>.
 
 #########################################################################
-# The name of the ports on the Integra 7				#
+#   Port names                                                          #
 #########################################################################
-INTEGRA7_OUT_PORT_NAME = 'INTEGRA7_OUT_PORT'
-INTEGRA7_IN_PORT_NAME = 'INTEGRA7_IN_PORT'
+INTEGRA7_OUT_PORT = 'INTEGRA-7_out'
+INTEGRA7_IN_PORT = 'INTEGRA-7_in'
+
+KEYLAB_OUT_PORT = 'KeyLab_out'
+KEYLAB_IN_PORT = 'KeyLab_in'
+
+MIDIRIG_DISPLAY_IN_PORT = 'MidiRigDisplay_in'
+
+DEFAULT_IN_PORT = 'default in'
