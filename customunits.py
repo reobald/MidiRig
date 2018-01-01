@@ -18,6 +18,7 @@
 from mididings import *
 from mididings.extra.osc import SendOSC
 from mididings.extra.gm import *
+from constants import INTEGRA7_PORT
 
 ####################
 # Global variables
@@ -126,7 +127,7 @@ def globalTranspose(midievent):
 ######################
 
 # Sends bank select and program change messages
-def ProgramChange(ch, group, nr, port='INTEGRA-7_out'):
+def ProgramChange(ch, group, nr, port=INTEGRA7_PORT):
     pgcInfo = convertToPgcInfo(group, nr)
     pgChange = Program(port, ch, pgcInfo['nr'])
     bankSelMsb = Ctrl(port, ch, 0x00, pgcInfo['msb'])

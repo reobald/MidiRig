@@ -71,14 +71,15 @@ config(
     client_name='MidiRig',
     # name ports and connect them to alsa client
     in_ports=[
-      (DEFAULT_IN_PORT, 'Virtual Raw MIDI 0-0.*:0'),
-      (KEYLAB_IN_PORT, 'KeyLab.*:0'),
-      (INTEGRA7_IN_PORT, 'INTEGRA-7.*:0'),
-      (MIDIRIG_DISPLAY_IN_PORT, 'MidiRigDisplay.*:0')
+        (DEFAULT_PORT, 'Virtual Raw MIDI 0-0.*:0'),
+        (KEYLAB_PORT, 'KeyLab 61.*:0'),
+        (INTEGRA7_PORT, 'INTEGRA-7.*:0'),
+        (MIDIRIG_DISPLAY_PORT, 'MidiRigDisplay.*:0')
     ],
     out_ports=[
-        (KEYLAB_OUT_PORT, 'KeyLab 61.*:0'),
-        (INTEGRA7_OUT_PORT, 'INTEGRA-7.*:0'),
+        (DEFAULT_PORT, 'Virtual Raw MIDI 0-0.*:0'),
+        (KEYLAB_PORT, 'KeyLab 61.*:0'),
+        (INTEGRA7_PORT, 'INTEGRA-7.*:0')
     ],
     # ...or just change the number of ports available    #in_ports=2,
 
@@ -195,9 +196,14 @@ pre = Print("pre") \
 control = Discard()
 
 # POST    : log and redirect to a port
-post = Print("out")  \
-    >> [SysExFilter(manufacturer=(0x00, 0x20, 0x6B))
-        % Port(KEYLAB_OUT_PORT), Port(INTEGRA7_OUT_PORT)]
+# redirect only in_ports, events with an out port already set are not affected
+
+post = PortSplit({
+        KEYLAB_PORT:            Port(INTEGRA7_PORT),
+        INTEGRA7_PORT:          Port(INTEGRA7_PORT),
+        DEFAULT_PORT:           Port(KEYLAB_PORT),
+        MIDIRIG_DISPLAY_PORT:   Port(KEYLAB_PORT)})\
+        >> Print("out")
 
 
 #######################################################

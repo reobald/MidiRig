@@ -18,12 +18,8 @@
 #########################################################################
 #   Port names                                                          #
 #########################################################################
-INTEGRA7_OUT_PORT = 'INTEGRA-7_out'
-INTEGRA7_IN_PORT = 'INTEGRA-7_in'
+INTEGRA7_PORT = 'INTEGRA-7'
+KEYLAB_PORT = 'KeyLab_61'
+DEFAULT_PORT = 'default'
+MIDIRIG_DISPLAY_PORT = 'MidiRigDisplay'
 
-KEYLAB_OUT_PORT = 'KeyLab_out'
-KEYLAB_IN_PORT = 'KeyLab_in'
-
-MIDIRIG_DISPLAY_IN_PORT = 'MidiRigDisplay_in'
-
-DEFAULT_IN_PORT = 'default in'

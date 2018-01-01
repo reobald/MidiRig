@@ -23,7 +23,7 @@ from mididings.event import MidiEvent, ProgramEvent, CtrlEvent, SysExEvent
 from mididings import *
 from mididings.extra.osc import SendOSC
 import sys
-
+from constants import DEFAULT_PORT
 
 class ArturiaMapping:
     def __init__(self):
@@ -90,7 +90,7 @@ class ArturiaMapping:
                 btn_adr,
                 btn_value,
                 0xF7]
-            event_list.append(SysExEvent(event.port, cmd))
+            event_list.append(SysExEvent(DEFAULT_PORT, cmd))
         return event_list
 
     def _convert_ctl_to_pgm(self, midi_event, program):
@@ -151,7 +151,7 @@ class ArturiaMapping:
             if 0 <= tmp <= 127:
                 self._transpose = tmp
                 syx = [0xf0, 0x7f, 0x04, 0x04, 0x00, self._transpose, 0xf7]
-                return SysExEvent(midievent.port, syx)
+                return SysExEvent(DEFAULT_PORT, syx)
         return self._reset_display_event
 
     def _generate_all_notes_off_events(self, midievent):
