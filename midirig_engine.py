@@ -32,6 +32,7 @@ from blinkingled import BlinkingLed
 from channelmapping import ChannelMapping
 from arturiamapping import ArturiaMapping
 from constants import *
+from global_transpose import GlobalTranspose
 #=================================
 # setup midiactivity indicator led
 #=================================
@@ -149,35 +150,6 @@ def all_notes_off(midi_event):
     return midi_event
 
 
-#================================================
-# Setup transpose infrastructure
-#================================================
-transpose = 0
-
-
-def set_transpose(midi_event):
-    global transpose
-    transpose = midi_event.sysex[5] - 64
-    return midi_event
-
-
-def global_transpose(midi_event):
-    midi_event.note += transpose
-    if 0 <= midi_event.note <= 127:
-        return midi_event
-    else:
-        return None
-
-
-def transpose_msg(midi_event):
-    global transpose
-    return "**** EDIT **** Transpose {}".format(transpose)
-
-
-SetTranspose = SysExFilter([0xf0, 0x7f, 0x04, 0x04, 0x00]) \
-    % (Process(set_transpose)
-       >> [SendOSC(56419, "/system/preview/text", lambda e: transpose_msg(e)), Ctrl(123, 0)])
-GlobalTranspose = Filter(NOTE) % Process(global_transpose)
 
 
 # cc82 always on ch 16
@@ -189,15 +161,13 @@ pre = Print("pre") \
     >> Process(midiactivity) >> Arturia >> Print("in")  \
     >> PgcChannelMapping >> ArturiaChannelMapping >> TranslateChannel  \
     >> RegNoteOn >> RegSusOn >> HandleNoteOff >> HandleSustainOff  \
-    >> cc82ch16 >> SetTranspose >> GlobalTranspose >> Process(all_notes_off)
+    >> cc82ch16 >> GlobalTranspose >> Process(all_notes_off)
 
 # CONTROL: select only program changes
 #control	= Filter(PROGRAM)
 control = Discard()
 
 # POST    : log and redirect to a port
-# redirect only in_ports, events with an out port already set are not affected
-
 post = PortSplit({
         KEYLAB_PORT:            Port(INTEGRA7_PORT),
         INTEGRA7_PORT:          Port(INTEGRA7_PORT),

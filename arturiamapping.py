@@ -49,7 +49,7 @@ class ArturiaMapping:
             29: lambda evt: self._convert_ctl_to_pgm(evt, 8),
             30: lambda evt: self._convert_ctl_to_pgm(evt, 15),
             31: lambda evt: self._convert_ctl_to_pgm(evt, 16),
-            53: lambda evt: self._generate_transpose_sysex_event(evt, -2),
+            53: lambda evt: self._generate_transpose_sysex_event(evt, -1),
             52: lambda evt: self._generate_transpose_sysex_event(evt, 1),
             51: lambda evt: self._generate_transpose_sysex_event(evt, 0),
             54: lambda evt: self._generate_all_notes_off_events(evt),

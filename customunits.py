@@ -87,41 +87,6 @@ def convertToPgcInfo(groupname, nr):
     return {'msb': msb, 'lsb': lsb, 'nr': nr}
 
 
-def transposeUp(midievent):
-    global transposeOffset
-    transposeOffset += 1
-    print "transpose up:" + str(transposeOffset)
-    return midievent
-
-
-def transposeDown(midievent):
-    global transposeOffset
-    transposeOffset -= 1
-    print "transpose down:" + str(transposeOffset)
-    return midievent
-
-
-def transposeReset(midievent):
-    global transposeOffset
-    transposeOffset = 0
-    return midievent
-
-
-def getTransposeMsg(midievent):
-    text = "**** EDIT **** "
-    text += "Transpose: "
-    text += str(transposeOffset)
-    return text
-
-
-def globalTranspose(midievent):
-    try:
-        midievent.note += transposeOffset
-        return midievent
-    except BaseException:
-        return midievent
-
-
 ######################
 # Mididings extensions
 ######################
@@ -149,18 +114,6 @@ def ConnectSusPedals(chA, chB):
         CTRL_SUSTAIN)) % [Pass(), Channel(chB)]
 
 
-def SetGlobalTranspose():
-    return CtrlFilter(79) % (((CtrlValueFilter(64) % Process(transposeReset)) >> (
-        CtrlValueFilter(0) % Process(transposeDown)) >> (
-        CtrlValueFilter(127) % Process(transposeUp))) >> SendOSC(
-            56419,
-            "/system/preview/text",
-        getTransposeMsg))
-
-
 def CC82toCH16():
     return CtrlFilter(82) % Channel(16)
 
-
-def GlobalTranspose():
-    return Process(globalTranspose)
