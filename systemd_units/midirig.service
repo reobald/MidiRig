@@ -4,10 +4,10 @@ PartOf=sound.target
 
 [Service]
 Type=simple
-EnvironmentFile=/root/midirig/util/midirig.config
-ExecStart=/root/midirig/midirig_engine.py $MIDIRIG_ENGINE $MIDIRIG_DISPLAY $MIDIRIG_REMOTE_TABLET $MIDIRIG_REMOTE_PHONE $MIDIRIG_REMOTE_EXTRA
-#ExecStart=/root/mididings_scripts/output.py $MIDIRIG_ENGINE $MIDIRIG_DISPLAY $MIDIRIG_REMOTE_TABLET $MIDIRIG_REMOTE_PHONE $MIDIRIG_REMOTE_EXTRA
-ExecStopPost=/root/midirig/util/displaymsg "${MIDIRIG_AWAITING_DEVICE_MESSAGE}"
+#EnvironmentFile=/root/midirig/util/midirig.config
+#ExecStart=/root/midirig/midirig_engine.py $MIDIRIG_ENGINE $MIDIRIG_DISPLAY $MIDIRIG_REMOTE_TABLET $MIDIRIG_REMOTE_PHONE $MIDIRIG_REMOTE_EXTRA
+ExecStart=/root/midirig/midirig_engine.py 
+ExecStopPost=/root/midirig/displaymsg.py --awaiting_device
 Restart=always
 RestartSec=3
 

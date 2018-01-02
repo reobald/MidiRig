@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License along with MidiRig.
 # If not, see <http://www.gnu.org licenses/>.
 
+import conf
 from mididings import SysExFilter, Process, Ctrl, Filter, NOTE
 from mididings.extra.osc import SendOSC
 
@@ -42,7 +43,7 @@ class GlobalTransposeHandler:
 
 SetTranspose = SysExFilter([0xf0, 0x7f, 0x04, 0x04, 0x00]) \
     % (Process(GlobalTransposeHandler.set_transpose)
-       >> [SendOSC(56419, "/system/preview/text",
+       >> [SendOSC(conf.DISPLAY_OSC_ADDR, "/system/preview/text",
                    lambda e: GlobalTransposeHandler.transpose_msg(e)),
            Ctrl(123, 0)])
 

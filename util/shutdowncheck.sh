@@ -34,7 +34,8 @@ while [ 1 ]; do
       /bin/sleep 0.02
       if [ $(($(date +%s%N | cut -b1-13)-$pulseStart)) -gt $REBOOTPULSEMAXIMUM ]; then
         echo "ATXRaspi triggered a shutdown signal, halting Rpi ... "
-	/root/midirig/util/displaymsg "$MIDIRIG_SHUTDOWN_MESSAGE"
+	#/root/midirig/util/displaymsg "$MIDIRIG_SHUTDOWN_MESSAGE"
+	/root/midirig/displaymsg.py --shutdown
 	systemctl stop midirig_display.service
         poweroff
         exit
@@ -44,7 +45,8 @@ while [ 1 ]; do
     #pulse went LOW, check if it was long enough, and trigger reboot
     if [ $(($(date +%s%N | cut -b1-13)-$pulseStart)) -gt $REBOOTPULSEMINIMUM ]; then 
       echo "ATXRaspi triggered a reboot signal, recycling Rpi ... "
-      /root/midirig/util/displaymsg "$MIDIRIG_REBOOT_MESSAGE"
+      #/root/midirig/util/displaymsg "$MIDIRIG_REBOOT_MESSAGE"
+      /root/midirig/displaymsg.py --reboot
 	systemctl stop midirig_display.service
       reboot
       exit

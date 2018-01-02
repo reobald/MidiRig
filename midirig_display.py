@@ -24,6 +24,7 @@ import time
 import signal
 import threading
 import subprocess
+import conf
 from previewer import Previewer
 from arturia_sysex import ArturiaSysexTransmitter
 
@@ -165,9 +166,9 @@ def update_display(sevseg_info, lcd_text):
         lock.release()
 
 
-# create server, listening on port 56419
+# create server at the configured port
 try:
-    server = liblo.Server(56419)
+    server = liblo.Server(conf.DISPLAY_OSC_ADDR)
 except liblo.ServerError as err:
     print(err)
     sys.exit()
@@ -300,6 +301,6 @@ server.add_method(None, None, fallback)
 
 
 # loop and dispatch messages every 100ms
-print("Server listening at port 56419")
+print("Server listening at port {}".format(conf.DISPLAY_OSC_ADDR))
 while True:
     server.recv(100)

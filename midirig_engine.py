@@ -22,6 +22,7 @@
 import sys
 import signal
 import scene
+import conf
 from mididings import *
 from mididings.extra.gm import *
 from mididings.extra.osc import OSCInterface
@@ -93,8 +94,11 @@ config(
 #=================================
 # Configure OSC communication
 #=================================
-port = sys.argv[1]
-notify_ports = sys.argv[2:]
+port = conf.MIDIRIG_OSC_ADDR
+notify_ports = (
+        conf.DISPLAY_OSC_ADDR, 
+        conf.TABLET_OSC_ADDR,
+        conf.PHONE_OSC_ADDR)
 hook(
     OSCInterface(port, notify_ports)
 )
@@ -114,7 +118,7 @@ HandleSustainOff = Process(ch_map.handle_sustain_off)
 #================================================
 # Setup arturia controller number mappings
 #================================================
-osc_port = sys.argv[2]
+osc_port = conf.DISPLAY_OSC_ADDR
 osc_prev_addr = "/system/preview/scene"
 arturia_map = ArturiaMapping()
 Arturia = (

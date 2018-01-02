@@ -4,9 +4,9 @@ Before=multi-user.target
 
 [Service]
 Type=Simple
-EnvironmentFile=/root/midirig/util/midirig.config
-ExecStart=/root/midirig/util/midirig_display.py
-ExecStartPost=/root/midirig/util/displaymsg "${MIDIRIG_BOOT_COMPLETE_MESSAGE}"
-
+#EnvironmentFile=/root/midirig/util/midirig.config
+ExecStart=/root/midirig/midirig_display.py
+#ExecStartPost=/root/midirig/util/displaymsg "${MIDIRIG_BOOT_COMPLETE_MESSAGE}"
+ExecStartPost=/root/midirig/displaymsg.py --boot_complete
 [Install]
 WantedBy=multi-user.target
