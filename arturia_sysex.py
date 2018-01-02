@@ -18,57 +18,93 @@ import time
 import threading
 from pyalsa.alsaseq import *
 from subprocess import check_output
+from constants import MIDIRIG_ALSA_CLIENT_NAME,MIDIRIG_DISPLAY_PORT
+from mididings import SYSEX
+from mididings.event import SysExEvent
+from constants import DEFAULT_PORT
 
+ARTURIA_ID = [0x00, 0x20, 0x6B]
 
-class ArturiaSysex():
-    # Sysex base message
-    ARTURIA_ID = [0x00, 0x20, 0x6B]
-    _BASE = [0xf0] + ARTURIA_ID + [0x7F, 0x42, 0x04, 0x00, 0x60]
+def _append_space(st):
+    l = 16 - len(st)
+    for i in range(l):
+        st = st + " "
+    return st
 
-    def _append_space(self, input):
-        l = 16 - len(input)
-        for i in range(l):
-            input = input + " "
-        return input
+def generate_name_msg(name):
+    two_row_name = _split_into_two_rows(name)
+    result = [0xf0] + ARTURIA_ID + [0x7F, 0x42, 0x04, 0x00, 0x60] 
+    row_nr = 0x01
+    for row in two_row_name:
+        result.append(row_nr)
+        row = _append_space(row)
+        row = map(ord, row)
+        result += row
+        result.append(0x00)
+        row_nr += 1
+    result.append(0xf7)
+    return result
 
-    def generate_name_msg(self, name):
-        two_row_name = self._split_into_two_rows(name)
-        result = list(self._BASE)
-        row_nr = 0x01
-        for row in two_row_name:
-            result.append(row_nr)
-            row = self._append_space(row)
-            row = map(ord, row)
-            result += row
-            result.append(0x00)
-            row_nr += 1
-        result.append(0xf7)
-        return result
+def _split_into_two_rows(st):
+    st = st.strip()
+    if len(st) <= 16:
+        return [st, ""]
 
-    def _split_into_two_rows(self, st):
-        st = st.strip()
-        if len(st) <= 16:
-            return [st, ""]
+    i = st[0:17].rfind(' ')
+    if i == -1:
+        return [st, ""]
 
-        i = st[0:17].rfind(' ')
-        if i == -1:
-            return [st, ""]
+    return [st[0:i].strip(), (st[i:].strip())[0:16]]
 
-        return [st[0:i].strip(), (st[i:].strip())[0:16]]
+def generate_name_msg_as_str(name):
+    bytes = generate_name_msg(name)
+    return ' '.join('{:02x}'.format(x) for x in bytes)
 
-    def generate_name_msg_as_str(self, name):
-        bytes = self.generate_name_msg(name)
-        return ' '.join('{:02x}'.format(x) for x in bytes)
+def is_name_msg(midi_event):
+    if midi_event.type == SYSEX:
+        header = [0xf0] + ARTURIA_ID + [ 0x7F, 0x42, 0x04, 0x00, 0x60]
+        for i, b in enumerate(header):
+            if b != midi_event.sysex[i]:
+                print "no match: {}!={}".format(b,
+                    midi_event.sysex[i])
+                return False
+        return True
+    else:
+        return False
+
+def generate_button_event(btn_nr, btn_value):
+    btn_adr = 0x12 + btn_nr
+    syx_msg = [
+        0xF0,
+        0x00,
+        0x20,
+        0x6B,
+        0x7F,
+        0x42,
+        0x02,
+        0x00,
+        0x10,
+        btn_adr,
+        btn_value,
+        0xF7]
+    return SysExEvent(DEFAULT_PORT, syx_msg)
+
+def generateToggledButtonEvents(btn_nr):
+    event_list = []
+    for i in range(10):
+        btn_value = 127 * (i == btn_nr)
+        syx_event = generate_button_event(i, btn_value)
+        event_list.append( syx_event )
+    return event_list
 
 
 class ArturiaSysexTransmitter(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self.stop_event = threading.Event()
-        self._alsaseq = Sequencer(clientname="MidiRigDisplay")
+        self._alsaseq = Sequencer(clientname=MIDIRIG_DISPLAY_PORT)
         if not self._alsaseq:
             print "Failed to create alsaseq.Sequenser()"
-        self._sysex_helper = ArturiaSysex()
         self._port_id = -1
         self._port_id = self._alsaseq.create_simple_port(
             name = 'out',
@@ -94,11 +130,11 @@ class ArturiaSysexTransmitter(threading.Thread):
 
     def _get_midirig_address(self):
         out = check_output(["aconnect", "-o"])
-        i = out.find('MidiRigDisplay_in')
+        i = out.find("MidiRigDisplay_in")
         if i > -1:
             i -= 4
             _port_id = out[i:(i + 3)].strip()
-            i = out.find('MidiRig')
+            i = out.find(MIDIRIG_ALSA_CLIENT_NAME)
             i -= 6
             client_id = out[i:(i + 3)].strip()
             return (int(client_id), int(_port_id))
@@ -109,7 +145,7 @@ class ArturiaSysexTransmitter(threading.Thread):
         return self._alsaseq.parse_address(address)
 
     def send_text(self, text):
-        syx = self._sysex_helper.generate_name_msg(text)
+        syx = generate_name_msg(text)
         evt = self._create_event(syx)
         self._alsaseq.output_event(evt)
 

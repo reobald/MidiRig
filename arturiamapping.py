@@ -24,6 +24,7 @@ from mididings import *
 from mididings.extra.osc import SendOSC
 import sys
 from constants import DEFAULT_PORT
+import arturia_sysex
 
 class ArturiaMapping:
     def __init__(self):
@@ -67,31 +68,13 @@ class ArturiaMapping:
                 return self._ctrl_map[midi_event.ctrl](midi_event)
         except KeyError:
             pass
-        if self._is_arturia_sysex_name_msg(midi_event):
+        if arturia_sysex.is_name_msg(midi_event):
             self._reset_display_event = midi_event
         return midi_event
 
     def _toggle_button_lights(self, event):
         button = event.ctrl - 22
-        event_list = []
-        for i in range(10):
-            btn_adr = 0x12 + i
-            btn_value = 127 * (i == button)
-            cmd = [
-                0xF0,
-                0x00,
-                0x20,
-                0x6B,
-                0x7F,
-                0x42,
-                0x02,
-                0x00,
-                0x10,
-                btn_adr,
-                btn_value,
-                0xF7]
-            event_list.append(SysExEvent(DEFAULT_PORT, cmd))
-        return event_list
+        return arturia_sysex.generateToggledButtonEvents( button )
 
     def _convert_ctl_to_pgm(self, midi_event, program):
         if midi_event.value > 0:
