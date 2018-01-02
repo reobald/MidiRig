@@ -4,9 +4,8 @@ BindsTo=sys-subsystem-net-devices-wlan1.device
 
 [Service]
 Type=simple
-EnvironmentFile=/root/midirig/util/midirig.config
-ExecStart=/root/midirig/util/checkinternetconnection
-ExecStopPost=/root/midirig/util/ledcontroller 24 0
+ExecStart=/root/midirig/bin/checkinternetconnection.sh
+ExecStopPost=/root/midirig/bin/ledcontroller 24 0
 
 [Install]
 WantedBy=sys-subsystem-net-devices-wlan1.device

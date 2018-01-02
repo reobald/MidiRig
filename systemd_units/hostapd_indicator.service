@@ -5,9 +5,7 @@ BindsTo=hostapd.service
 [Service]
 Type=simple
 RemainAfterExit=True
-EnvironmentFile=/root/midirig/util/midirig.config
-ExecStart=/root/midirig/util/check_connected_clients
-#ExecStop=/root/midirig/util/ledcontroller 23 0
+ExecStart=/root/midirig/bin/check_connected_clients.sh
 
 [Install]
 WantedBy=hostapd.service

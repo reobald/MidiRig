@@ -4,8 +4,7 @@ After=multi-user.target
 
 [Service]
 Type=Simple
-EnvironmentFile=/root/midirig/util/midirig.config
-ExecStart=/root/midirig/util/shutdowncheck.sh
+ExecStart=/root/midirig/bin/shutdowncheck.sh
 
 [Install]
 WantedBy=multi-user.target
