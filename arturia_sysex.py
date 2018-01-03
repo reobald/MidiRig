@@ -21,6 +21,7 @@ from subprocess import check_output
 from constants import MIDIRIG_ALSA_CLIENT_NAME,MIDIRIG_DISPLAY_PORT
 from mididings import SYSEX
 from mididings.event import SysExEvent
+from mididings.units import SysEx
 from constants import DEFAULT_PORT
 
 ARTURIA_ID = [0x00, 0x20, 0x6B]
@@ -72,7 +73,7 @@ def is_name_msg(midi_event):
     else:
         return False
 
-def generate_button_event(btn_nr, btn_value):
+def generate_button_sysex(btn_nr, btn_value):
     btn_adr = 0x12 + btn_nr
     syx_msg = [
         0xF0,
@@ -87,15 +88,24 @@ def generate_button_event(btn_nr, btn_value):
         btn_adr,
         btn_value,
         0xF7]
-    return SysExEvent(DEFAULT_PORT, syx_msg)
+    return syx_msg
 
 def generateToggledButtonEvents(btn_nr):
-    event_list = []
+    return generateToggledButtonList(btn_nr, SysExEvent)
+
+
+def generateToggledButtonPatches(btn_nr):
+    return generateToggledButtonList(btn_nr, SysEx)
+
+
+def generateToggledButtonList(btn_nr, funct):
+    generic_list = []
     for i in range(10):
         btn_value = 127 * (i == btn_nr)
-        syx_event = generate_button_event(i, btn_value)
-        event_list.append( syx_event )
-    return event_list
+        syx_msg = generate_button_sysex(i, btn_value)
+        generic_list.append( funct(DEFAULT_PORT,syx_msg ))
+    return generic_list
+    
 
 
 class ArturiaSysexTransmitter(threading.Thread):
