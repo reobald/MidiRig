@@ -42,6 +42,13 @@ class ChannelMapping:
             midi_event.channel = self.lower_dest_ch
         return midi_event
 
+    def change_upper_channel_mapping(self, ch):
+        self.upper_dest_ch = ch
+
+    def change_lower_channel_mapping(self, ch):
+        self.lower_dest_ch = ch
+
+
     def pgc_channel_mapping(self, midi_event):
         if (midi_event.type == PROGRAM):
             ch = midi_event.program % 8
@@ -50,9 +57,9 @@ class ChannelMapping:
             if (ch == 7):
                 ch = 15
             if(midi_event.channel == self.lower_source_ch):
-                self.lower_dest_ch = ch
+                self.change_lower_channel_mapping(ch) 
             elif(midi_event.channel == self.upper_source_ch):
-                self.upper_dest_ch = ch
+                self.change_upper_channel_mapping(ch) 
             return None
         return midi_event
 
@@ -60,10 +67,10 @@ class ChannelMapping:
         if(midi_event.channel == self.upper_source_ch):
             if (midi_event.type == CTRL):
                 if (22 <= midi_event.ctrl <= 29):
-                    self.upper_dest_ch = midi_event.ctrl - 21
+                    self.change_upper_dest_ch(midi_event.ctrl - 21)
                     return None
                 elif (30 <= midi_event.ctrl <= 31):
-                    self.upper_dest_ch = midi_event.ctrl - 15
+                    self.change_upper_dest_ch(midi_event.ctrl - 15)
                     return None
         return midi_event
 
