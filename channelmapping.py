@@ -34,6 +34,24 @@ class ChannelMapping:
         self.lower_keys_pressed = {}
         self.lower_sustain = {}
         self.upper_sustain = {}
+        self.lower_keyb_controller_inits={}
+        self.upper_keyb_controller_inits={}
+
+    def add_upper_keyb_init(self, scene, channel):
+        self.upper_keyb_controller_inits[scene]=channel
+    
+    
+    def add_lower_keyb_init(self, scene, channel):
+        self.lower_keyb_controller_inits[scene]=channel
+    
+    
+    def on_switch_scene(self,scene, subscene):
+        print "on_scene_switch@channelmapping"
+        lower_ch = self.lower_keyb_controller_inits.get(scene,2)
+        upper_ch = self.upper_keyb_controller_inits.get(scene,1)
+        self.change_lower_channel_mapping(lower_ch) 
+        self.change_upper_channel_mapping(upper_ch) 
+
 
     def translate_ch(self, midi_event):
         if (midi_event.channel == self.upper_source_ch):

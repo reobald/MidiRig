@@ -91,18 +91,6 @@ config(
 )
 
 
-#=================================
-# Configure OSC communication
-#=================================
-port = conf.MIDIRIG_OSC_ADDR
-notify_ports = (
-        conf.DISPLAY_OSC_ADDR, 
-        conf.TABLET_OSC_ADDR,
-        conf.PHONE_OSC_ADDR)
-hook(
-    OSCInterface(port, notify_ports)
-)
-
 #================================================
 # Setup midi channel translation infrastructure
 #================================================
@@ -114,6 +102,19 @@ RegNoteOn = Process(ch_map.reg_note_on)
 HandleNoteOff = Process(ch_map.handle_note_off)
 RegSusOn = Process(ch_map.reg_sus_on)
 HandleSustainOff = Process(ch_map.handle_sustain_off)
+
+#=================================
+# Configure OSC communication
+#=================================
+port = conf.MIDIRIG_OSC_ADDR
+notify_ports = (
+        conf.DISPLAY_OSC_ADDR, 
+        conf.TABLET_OSC_ADDR,
+        conf.PHONE_OSC_ADDR)
+hook(
+    OSCInterface(port, notify_ports),
+    ch_map
+)
 
 #================================================
 # Setup arturia controller number mappings
@@ -185,71 +186,71 @@ post = PortSplit({
 #######################################################
 run(
     scenes={
-        1: scene.default(),
-        2: scene.beautiful_day(),
-        3: scene.andetag(),
-        4: scene._24_k_magic(),
-        5: scene.africa(),
-        6: scene.evelina(),
-        7: scene.bara_minnen(),
-        8: scene.det_stora_blaa(),
-        9: scene.vargar(),
-        10: scene.angelina(),
-        11: scene.precis_som_forr(),
-        12: scene.roda_lappar(),
-        13: scene.anglars_tarar(),
-        14: scene.closer(),
-        15: scene.timberlake(),
-        16: scene.you_should_be_dancing(),
-        17: scene.on_my_own(),
-        18: scene.paradise(),
-        19: scene.beautiful_day(),
-        20: scene.sledgehammer(),
-        21: scene.born_to_run(),
-        22: scene.human_nature(),
-        23: scene.billie_jean(),
-        24: scene.staying_alive(),
-        25: scene.play_that_funky_music(),
-        26: scene.lets_go_crazy(),
-        27: scene.brass_octave(),
-        28: scene.everybody_wants_to_rule_the_world(),
-        29: scene.i_wish(),
-        30: scene.could_you_be_loved(),
-        31: scene.what_a_fool_believes(),
-        32: scene.baby_love(),
-        33: scene.use_me(),
-        34: scene.sharp_dressed_man(),
-        35: scene.do_i_do(),
-        36: scene.boys_of_summer(),
-        37: scene.neo_soul(),
-        38: scene.crazy(),
-        39: scene.happy(),
-        40: scene.i_keep_forgetting(),
-        41: scene.driven_to_tears(),
-        42: scene.i_cant_go_for_that(),
-        43: scene.wurlitzer(),
-        44: scene.make_it_right(),
-        45: scene.call_me_al(),
-        46: scene.the_way_you_make_me_feel(),
-        47: scene.teardrops(),
-        48: scene.watcha_gonna_do(),
-        49: scene.im_every_woman(),
-        50: scene.aint_nobody(),
-        51: scene.appaloosa(),
-        52: scene.in_the_air_tonight(),
-        53: scene.hard_to_handle(),
-        54: scene.land_of_confusion(),
-        55: scene.pick_up_the_pieces(),
-        56: scene.you_cant_hide_love(),
-        57: scene.got_to_give_it_up(),
-        58: scene.let_the_good_times_roll(),
-        59: scene.some_die_young(),
-        60: scene.everywhere(),
-        61: scene.i_cant_stop_loving_you(),
-        62: scene.aint_that_peculiar(),
-        63: scene.like_wine(),
-        64: scene.as_by_stevie_wonder(),
-        65: scene.higher_ground(),
+        1: scene.default( ch_map, 1),
+        2: scene.beautiful_day( ch_map, 2),
+        3: scene.andetag( ch_map, 3),
+        4: scene._24_k_magic( ch_map, 4),
+        5: scene.africa( ch_map, 5),
+        6: scene.evelina( ch_map, 6),
+        7: scene.bara_minnen( ch_map, 7),
+        8: scene.det_stora_blaa( ch_map, 8),
+        9: scene.vargar( ch_map, 9),
+        10: scene.angelina( ch_map, 10),
+        11: scene.precis_som_forr( ch_map, 11),
+        12: scene.roda_lappar( ch_map, 12),
+        13: scene.anglars_tarar( ch_map, 13),
+        14: scene.closer( ch_map, 14),
+        15: scene.timberlake( ch_map, 15),
+        16: scene.you_should_be_dancing( ch_map, 16),
+        17: scene.on_my_own( ch_map, 17),
+        18: scene.paradise( ch_map, 18),
+        19: scene.beautiful_day( ch_map, 19),
+        20: scene.sledgehammer( ch_map, 20),
+        21: scene.born_to_run( ch_map, 21),
+        22: scene.human_nature( ch_map, 22),
+        23: scene.billie_jean( ch_map, 23),
+        24: scene.staying_alive( ch_map, 24),
+        25: scene.play_that_funky_music( ch_map, 25),
+        26: scene.lets_go_crazy( ch_map, 26),
+        27: scene.brass_octave( ch_map, 27),
+        28: scene.everybody_wants_to_rule_the_world( ch_map, 28),
+        29: scene.i_wish( ch_map, 29),
+        30: scene.could_you_be_loved( ch_map, 30),
+        31: scene.what_a_fool_believes( ch_map, 31),
+        32: scene.baby_love( ch_map, 32),
+        33: scene.use_me( ch_map, 33),
+        34: scene.sharp_dressed_man( ch_map, 34),
+        35: scene.do_i_do( ch_map, 35),
+        36: scene.boys_of_summer( ch_map, 36),
+        37: scene.neo_soul( ch_map, 37),
+        38: scene.crazy( ch_map, 38),
+        39: scene.happy( ch_map, 39),
+        40: scene.i_keep_forgetting( ch_map, 40),
+        41: scene.driven_to_tears( ch_map, 41),
+        42: scene.i_cant_go_for_that( ch_map, 42),
+        43: scene.wurlitzer( ch_map, 43),
+        44: scene.make_it_right( ch_map, 44),
+        45: scene.call_me_al( ch_map, 45),
+        46: scene.the_way_you_make_me_feel( ch_map, 46),
+        47: scene.teardrops( ch_map, 47),
+        48: scene.watcha_gonna_do( ch_map, 48),
+        49: scene.im_every_woman( ch_map, 49),
+        50: scene.aint_nobody( ch_map, 50),
+        51: scene.appaloosa( ch_map, 51),
+        52: scene.in_the_air_tonight( ch_map, 52),
+        53: scene.hard_to_handle( ch_map, 53),
+        54: scene.land_of_confusion( ch_map, 54),
+        55: scene.pick_up_the_pieces( ch_map, 55),
+        56: scene.you_cant_hide_love( ch_map, 56),
+        57: scene.got_to_give_it_up( ch_map, 57),
+        58: scene.let_the_good_times_roll( ch_map, 58),
+        59: scene.some_die_young( ch_map, 59),
+        60: scene.everywhere( ch_map, 60),
+        61: scene.i_cant_stop_loving_you( ch_map, 61),
+        62: scene.aint_that_peculiar( ch_map, 62),
+        63: scene.like_wine( ch_map, 63),
+        64: scene.as_by_stevie_wonder( ch_map, 64),
+        65: scene.higher_ground( ch_map, 65),
     },
     control=control,
     pre=pre,
