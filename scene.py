@@ -59,7 +59,7 @@ def andetag(channel_mapping,scene):
                  Pass(),
                  [
                      ProgramChange(1, "STUDIO SET", 2),
-                     ProgramChange(16, "NORD ELECTRO", 1),
+                     ProgramChange(16, "NORD ELECTRO", 25),
                      UpperKeybInit,
                      LowerKeybInit
                  ]
@@ -95,18 +95,16 @@ def africa(channel_mapping,scene):
 
 
 def evelina(channel_mapping,scene):
-    UpperKeybInit = initUpperKeybController(channel_mapping,scene, 1)
-    LowerKeybInit = initLowerKeybController(channel_mapping,scene, 2)
-    return Scene("Evelina", 
-                  (ChannelFilter(4) & CtrlFilter(11)) % \
-                   ConvertExpression(4, 74) >> \
-                   CtrlRange(74, 20, 120), 
-                   [
-                        ProgramChange(1, "STUDIO SET", 5), 
-                        ProgramChange(16, "NORD ELECTRO", 1),
+    UpperKeybInit = initUpperKeybController(channel_mapping,scene, 3)
+    LowerKeybInit = initLowerKeybController(channel_mapping,scene, 16)
+    return Scene("Evelina",
+                 ConnectSusPedals(3,2), 
+                 [
+                     ProgramChange(1, "STUDIO SET", 5), 
+                     ProgramChange(16, "NORD ELECTRO", 1),
                      UpperKeybInit,
                      LowerKeybInit
-                   ]
+                 ]
                 )
 
 
@@ -989,6 +987,77 @@ def lets_go_crazy(channel_mapping,scene):
                  Pass(),
                  [
                      ProgramChange(1, "STUDIO SET", 56),
+                     ProgramChange(16, "NORD ELECTRO", 1),
+                     UpperKeybInit,
+                     LowerKeybInit
+                 ]
+                 )
+def locked_out_of_heaven(channel_mapping,scene):
+    name = "Locked out of heaven"
+    integra7sysex = Integra7Sysex()
+    msg = integra7sysex.generateNameMsg(name)
+    UpperKeybInit = initUpperKeybController(channel_mapping,scene, 1)
+    LowerKeybInit = initLowerKeybController(channel_mapping,scene, 2)
+    return Scene(name,
+                 Transpose(-12),
+                 [
+                     ProgramChange(1, "STUDIO SET", 64),
+                     ProgramChange(2, "SN-S PRST", 317),
+                     ProgramChange(1, "SN-S PRST", 361),
+                     SysEx(msg),
+                     ProgramChange(16, "NORD ELECTRO", 1),
+                     UpperKeybInit,
+                     LowerKeybInit
+                 ]
+                 )
+
+def come_as_you_are(channel_mapping,scene):
+    UpperKeybInit = initUpperKeybController(channel_mapping,scene, 1)
+    LowerKeybInit = initLowerKeybController(channel_mapping,scene, 2)
+    return Scene("Come as you are",
+                 Pass(),
+                 [
+                     ProgramChange(1, "STUDIO SET", 26),
+                     ProgramChange(16, "NORD ELECTRO", 1),
+                     ProgramChange(2, "SN-A PRST", 34),
+                     UpperKeybInit,
+                     LowerKeybInit
+                 ]
+                 )
+
+def where_is_the_love(channel_mapping,scene):
+    UpperKeybInit = initUpperKeybController(channel_mapping,scene, 1)
+    LowerKeybInit = initLowerKeybController(channel_mapping,scene, 2)
+    return Scene("Where is the love",
+                 Pass(),
+                 [
+                     ProgramChange(1, "STUDIO SET", 57),
+                     ProgramChange(16, "NORD ELECTRO", 1),
+                     UpperKeybInit,
+                     LowerKeybInit
+                 ]
+                 )
+
+def luft(channel_mapping,scene):
+    UpperKeybInit = initUpperKeybController(channel_mapping,scene, 1)
+    LowerKeybInit = initLowerKeybController(channel_mapping,scene, 16)
+    return Scene("Luft",
+                 Pass(),
+                 [
+                     ProgramChange(1, "STUDIO SET", 60),
+                     ProgramChange(16, "NORD ELECTRO", 1),
+                     UpperKeybInit,
+                     LowerKeybInit
+                 ]
+                 )
+
+def utan_dig(channel_mapping,scene):
+    UpperKeybInit = initUpperKeybController(channel_mapping,scene, 1)
+    LowerKeybInit = initLowerKeybController(channel_mapping,scene, 2)
+    return Scene("Utan dig",
+                 Pass(),
+                 [
+                     ProgramChange(1, "STUDIO SET", 60),
                      ProgramChange(16, "NORD ELECTRO", 1),
                      UpperKeybInit,
                      LowerKeybInit
