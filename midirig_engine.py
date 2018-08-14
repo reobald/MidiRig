@@ -74,14 +74,16 @@ config(
     # name ports and connect them to alsa client
     in_ports=[
         (DEFAULT_PORT, 'Virtual Raw MIDI 0-0.*:0'),
-        (KEYLAB_PORT, 'KeyLab 61.*:0'),
-        (INTEGRA7_PORT, 'INTEGRA-7.*:0'),
-        (MIDIRIG_DISPLAY_PORT, 'MidiRigDisplay.*:0')
+        (KEYLAB_PORT, 'KeyLab 61:0'),
+        (INTEGRA7_PORT, 'INTEGRA-7:0'),
+#	(MICROKORG_PORT, 'microKORG XL:1'),
+        (MIDIRIG_DISPLAY_PORT, 'MidiRigDisplay:0')
     ],
     out_ports=[
         (DEFAULT_PORT, 'Virtual Raw MIDI 0-0.*:0'),
-        (KEYLAB_PORT, 'KeyLab 61.*:0'),
-        (INTEGRA7_PORT, 'INTEGRA-7.*:0')
+        (KEYLAB_PORT, 'KeyLab 61:0'),
+        (INTEGRA7_PORT, 'INTEGRA-7:0'),
+	(MICROKORG_PORT, 'microKORG XL:1')
     ],
     # ...or just change the number of ports available    #in_ports=2,
 
@@ -166,7 +168,8 @@ pre = Print("pre") \
     >> Process(midiactivity) >> Arturia >> Print("in")  \
     >> PgcChannelMapping >> ArturiaChannelMapping >> TranslateChannel  \
     >> RegNoteOn >> RegSusOn >> HandleNoteOff >> HandleSustainOff  \
-    >> cc82ch16 >> GlobalTranspose >> Process(all_notes_off)
+    >> cc82ch16 >> GlobalTranspose >> Process(all_notes_off) \
+    >> ChannelFilter(6) % Port(MICROKORG_PORT)
 
 # CONTROL: select only program changes
 #control	= Filter(PROGRAM)
@@ -177,6 +180,7 @@ post = PortSplit({
         KEYLAB_PORT:            Port(INTEGRA7_PORT),
         INTEGRA7_PORT:          Port(INTEGRA7_PORT),
         DEFAULT_PORT:           Port(KEYLAB_PORT),
+	MICROKORG_PORT:		Port(MICROKORG_PORT),
         MIDIRIG_DISPLAY_PORT:   Port(KEYLAB_PORT)})\
         >> Print("out")
 
