@@ -23,5 +23,6 @@ KEYLAB_PORT = 'KeyLab_61'
 DEFAULT_PORT = 'default'
 MICROKORG_PORT = 'MicroKorg_XL'
 MIDIRIG_DISPLAY_PORT = 'MidiRigDisplay'
+MIDICLOCK_PORT = 'MidiClock'
 
 MIDIRIG_ALSA_CLIENT_NAME = 'MidiRig'

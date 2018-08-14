@@ -76,7 +76,7 @@ config(
         (DEFAULT_PORT, 'Virtual Raw MIDI 0-0.*:0'),
         (KEYLAB_PORT, 'KeyLab 61:0'),
         (INTEGRA7_PORT, 'INTEGRA-7:0'),
-#	(MICROKORG_PORT, 'microKORG XL:1'),
+	(MIDICLOCK_PORT, 'midiclock:0'),
         (MIDIRIG_DISPLAY_PORT, 'MidiRigDisplay:0')
     ],
     out_ports=[
@@ -181,6 +181,7 @@ post = PortSplit({
         INTEGRA7_PORT:          Port(INTEGRA7_PORT),
         DEFAULT_PORT:           Port(KEYLAB_PORT),
 	MICROKORG_PORT:		Port(MICROKORG_PORT),
+	MIDICLOCK_PORT:		[Port(MICROKORG_PORT),Port(INTEGRA7_PORT),Port(KEYLAB_PORT)],
         MIDIRIG_DISPLAY_PORT:   Port(KEYLAB_PORT)})\
         >> Print("out")
 

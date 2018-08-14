@@ -20,6 +20,11 @@ systemctl enable `pwd`/midirig_display.service
 ##################
 systemctl enable `pwd`/shutdownbutton.service
 
+#############
+# midiclock #
+#############
+systemctl enable `pwd`/midiclock.service
+
 ###########
 # midirig #
 ###########
