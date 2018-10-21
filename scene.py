@@ -1,5 +1,5 @@
 from mididings import *
-from customunits import ProgramChange,ConvertExpression, ConnectSusPedals
+from customunits import *
 from mididings.extra import *
 from roland_sysex import Integra7Sysex
 from mididings.event import MidiEvent
@@ -729,7 +729,8 @@ def aint_nobody(channel_mapping,scene):
                      ProgramChange(1, "STUDIO SET", 49),
                      ProgramChange(16, "NORD ELECTRO", 1),
                      UpperKeybInit,
-                     LowerKeybInit
+                     LowerKeybInit,
+		     StartMidiClock(103)
                  ]
                  )
 

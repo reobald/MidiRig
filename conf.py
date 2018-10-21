@@ -6,6 +6,8 @@ TABLET_OSC_ADDR="osc.udp://192.168.42.10:56419"
 PHONE_OSC_ADDR="osc.udp://192.168.42.11:56419"
 #EXTRA_OSC_ADDR="osc.udp://192.168.42.13:56419"
 
+MIDICLOCK_OSC_ADDR=4040
+
 SHUTDOWN_MESSAGE="MidiRig         Shutting down..."
 REBOOT_MESSAGE="MidiRig         Restarting..."
 BOOT_COMPLETE_MESSAGE="MidiRig started awaiting device"

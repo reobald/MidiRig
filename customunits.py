@@ -19,6 +19,7 @@ from mididings import *
 from mididings.extra.osc import SendOSC
 from mididings.extra.gm import *
 from constants import INTEGRA7_PORT
+from conf import MIDICLOCK_OSC_ADDR
 
 ####################
 # Global variables
@@ -116,4 +117,17 @@ def ConnectSusPedals(chA, chB):
 
 def CC82toCH16():
     return CtrlFilter(82) % Channel(16)
+
+def StartMidiClock(bpm):
+    return SendOSC(MIDICLOCK_OSC_ADDR,'/tempo',bpm)>>\
+           SendOSC(MIDICLOCK_OSC_ADDR,'/start')
+
+def StopMidiClock():
+    return SendOSC(MIDICLOCK_OSC_ADDR,'/stop')
+
+def ContinueMidiClock():
+    return SendOSC(MIDICLOCK_OSC_ADDR,'/continue')
+
+def SetMidiClockTempo(bpm):
+    return SendOSC(MIDICLOCK_OSC_ADDR,'/tempo',bpm)
 
